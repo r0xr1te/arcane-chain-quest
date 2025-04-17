@@ -242,35 +242,93 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     }
   };
 
+  const getCardPosition = (cardId: string) => {
+    const element = document.getElementById(`card-${cardId}`);
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+  };
+
   return (
-    <div 
-      ref={gridRef}
-      className={cn(
-        "grid grid-cols-4 gap-2 w-full max-w-md mx-auto p-4 bg-game-ui/30 rounded-lg",
-        disabled ? "opacity-70 pointer-events-none" : "cursor-pointer"
-      )}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-    >
-      {grid.map((row, rowIdx) => 
-        row.map((card, colIdx) => (
-          <div
-            id={`card-${card.id}`}
-            key={card.id}
-            className={cn(
-              "game-card aspect-square",
-              card.type,
-              card.selected && "selected"
-            )}
-            onPointerDown={(e) => handlePointerDown(e, card)}
+    <div className="relative flex gap-4">
+      <div 
+        ref={gridRef}
+        className={cn(
+          "grid grid-cols-4 gap-2 w-full max-w-md mx-auto p-4 bg-game-ui/30 rounded-lg relative",
+          disabled ? "opacity-70 pointer-events-none" : "cursor-pointer"
+        )}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      >
+        {chainedCards.length > 0 && (
+          <svg 
+            className="absolute inset-0 pointer-events-none z-10"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' }}
           >
-            <div className={`card-element ${card.type}`}>
-              {getCardIcon(card.type)}
+            {chainedCards.map((card, i) => {
+              if (i === chainedCards.length - 1) return null;
+              const start = getCardPosition(card.id);
+              const end = getCardPosition(chainedCards[i + 1].id);
+              if (!start || !end) return null;
+              
+              return (
+                <line
+                  key={`line-${i}`}
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke="white"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  opacity="0.6"
+                />
+              );
+            })}
+          </svg>
+        )}
+
+        {grid.map((row, rowIdx) => 
+          row.map((card, colIdx) => (
+            <div
+              id={`card-${card.id}`}
+              key={card.id}
+              className={cn(
+                "game-card aspect-square",
+                card.type,
+                card.selected && "selected",
+                card.selected && "scale-110 shadow-lg shadow-white/20 z-10"
+              )}
+              onPointerDown={(e) => handlePointerDown(e, card)}
+            >
+              <div className={`card-element ${card.type}`}>
+                {getCardIcon(card.type)}
+              </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
+      </div>
+
+      <div className="grid grid-cols-4 gap-1 w-32 h-32 bg-game-ui/10 rounded-lg p-2 self-start">
+        {grid.map((row, rowIdx) => 
+          row.map((card, colIdx) => (
+            <div
+              key={`opponent-${card.id}`}
+              className={cn(
+                "aspect-square rounded-sm opacity-50",
+                card.type === 'fire' && "bg-game-fire",
+                card.type === 'nature' && "bg-game-nature",
+                card.type === 'ice' && "bg-game-ice",
+                card.type === 'mystic' && "bg-game-mystic"
+              )}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };
