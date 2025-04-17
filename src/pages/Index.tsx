@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import CardGrid from "@/components/CardGrid";
 import Character from "@/components/Character";
@@ -85,15 +86,16 @@ const Index = () => {
   };
 
   const isAdjacent = (card1: Card, card2: Card) => {
-    const isHorizontalAdjacent = card1.row === card2.row && Math.abs(card1.col - card2.col) === 1;
-    const isVerticalAdjacent = card1.col === card2.col && Math.abs(card1.row - card2.row) === 1;
-    return isHorizontalAdjacent || isVerticalAdjacent;
+    const rowDiff = Math.abs(card1.row - card2.row);
+    const colDiff = Math.abs(card1.col - card2.col);
+    return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0);
   };
 
   const initGame = (playerName: string) => {
     let playerGrid = createInitialGrid();
     let enemyGrid = createInitialGrid();
     
+    // Ensure there's at least one possible chain in each grid
     while (!checkForPossibleChains(playerGrid)) {
       playerGrid = createInitialGrid();
     }
@@ -305,9 +307,11 @@ const Index = () => {
       return;
     }
     
+    // Find possible chains in the enemy grid
     const enemyGrid = gameState.enemyGrid;
     let possibleChains: Card[][] = [];
     
+    // Find all cards of each type
     const typeGroups: Record<ElementType, Card[]> = {
       'fire': [],
       'ice': [],
@@ -315,27 +319,34 @@ const Index = () => {
       'nature': []
     };
     
+    // Group cards by type
     enemyGrid.flat().forEach(card => {
       typeGroups[card.type].push(card);
     });
     
+    // For each type, find possible chains
     Object.keys(typeGroups).forEach(type => {
       const cards = typeGroups[type as ElementType];
-      if (cards.length >= 3) {
+      if (cards.length >= 3) { // Need at least 3 cards for a meaningful chain
+        // Try to find adjacent cards
         for (let i = 0; i < cards.length; i++) {
           let chain: Card[] = [cards[i]];
           let processed = new Set<string>([cards[i].id]);
           
-          while (chain.length < 5) {
-            let foundAdjacent = false;
+          // Try to grow the chain with adjacent cards
+          let foundAdjacent = true;
+          while (foundAdjacent && chain.length < 5) { // Cap at 5 cards max
+            foundAdjacent = false;
             const lastCard = chain[chain.length - 1];
             
+            // Find adjacent cards of the same type that are not in the chain yet
             const adjacent = cards.filter(c => 
               !processed.has(c.id) && 
               isAdjacent(lastCard, c)
             );
             
             if (adjacent.length > 0) {
+              // Take the first adjacent card
               chain.push(adjacent[0]);
               processed.add(adjacent[0].id);
               foundAdjacent = true;
@@ -349,6 +360,7 @@ const Index = () => {
       }
     });
     
+    // If no possible chains found, regenerate the enemy grid
     if (possibleChains.length === 0) {
       const newEnemyGrid = createInitialGrid();
       setGameState(prev => {
@@ -360,20 +372,24 @@ const Index = () => {
       });
       toast.info("Enemy has no possible moves! Their grid is refreshed.");
       
+      // Now find chains in the new grid
       setTimeout(() => handleEnemyTurn(), 1000);
       return;
     }
     
+    // Choose a chain (prefer longer chains and more powerful types)
     const sortedChains = [...possibleChains].sort((a, b) => {
+      // First sort by length
       if (a.length !== b.length) {
         return b.length - a.length;
       }
       
+      // Then sort by type preference (fire and mystic are offensive)
       const typeScore = (type: ElementType): number => {
         if (type === 'fire') return 4;
         if (type === 'mystic') return 3;
         if (type === 'ice') return 2;
-        return 1;
+        return 1; // nature
       };
       
       return typeScore(b[0].type) - typeScore(a[0].type);
@@ -383,6 +399,7 @@ const Index = () => {
     const chainType = selectedChain[0].type;
     const chainLength = selectedChain.length;
     
+    // Calculate power and create spell
     const power = calculateSpellPower(selectedChain);
     
     const spell: Spell = {
@@ -413,16 +430,19 @@ const Index = () => {
       let newEnemyHealth = gameState.enemy.currentHealth;
       
       if (spell.element === 'nature') {
+        // Enemy heals
         newEnemyHealth = Math.min(
           gameState.enemy.maxHealth, 
           gameState.enemy.currentHealth + Math.floor(power * 0.8)
         );
       } else {
+        // Enemy deals damage
         newPlayerHealth = Math.max(0, gameState.player.currentHealth - power);
       }
       
       const newGameStatus = newPlayerHealth <= 0 ? "enemyWon" : "playing";
       
+      // Replace used cards in the enemy grid
       const newEnemyGrid = simpleReplaceCards(gameState.enemyGrid, selectedChain);
       
       setGameState(prev => {
@@ -446,13 +466,16 @@ const Index = () => {
         toast.error("Defeat! You were defeated by the enemy!");
       }
       
+      // Check if the new enemy grid has possible chains
       setTimeout(() => {
         setGameState(prev => {
           if (!prev || prev.gameStatus !== "playing") return prev;
           
+          // Check if the enemy grid has possible chains
           const hasChains = checkForPossibleChains(prev.enemyGrid);
           let enemyGrid = prev.enemyGrid;
           
+          // If no chains possible, regenerate the enemy grid
           if (!hasChains) {
             enemyGrid = createInitialGrid();
             toast.info("Enemy has no possible moves! Their grid is refreshed.");
@@ -498,6 +521,7 @@ const Index = () => {
           isFrozen={gameState.enemyFrozen}
         />
         
+        {/* Opponent Grid - Always shown */}
         <CardGrid
           onChainComplete={() => {}}
           disabled={true}

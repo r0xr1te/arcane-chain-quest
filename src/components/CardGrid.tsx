@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
 import { Card, ElementType } from "@/types/game";
@@ -111,9 +112,9 @@ const CardGrid: React.FC<CardGridProps> = ({
   };
 
   const isAdjacent = (card1: Card, card2: Card) => {
-    const isHorizontalAdjacent = card1.row === card2.row && Math.abs(card1.col - card2.col) === 1;
-    const isVerticalAdjacent = card1.col === card2.col && Math.abs(card1.row - card2.row) === 1;
-    return isHorizontalAdjacent || isVerticalAdjacent;
+    const rowDiff = Math.abs(card1.row - card2.row);
+    const colDiff = Math.abs(card1.col - card2.col);
+    return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0);
   };
 
   const isCardInChain = (card: Card) => {
@@ -423,6 +424,7 @@ const CardGrid: React.FC<CardGridProps> = ({
     setGrid(generateGrid());
   };
 
+  // Public method to update grid externally
   if (isOpponentGrid) {
     return (
       <div className={cn(
@@ -464,6 +466,7 @@ const CardGrid: React.FC<CardGridProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Chain lines visualization */}
         {chainedCards.length > 0 && (
           <svg 
             className="absolute inset-0 pointer-events-none z-10"
@@ -513,6 +516,7 @@ const CardGrid: React.FC<CardGridProps> = ({
         )}
       </div>
 
+      {/* Damage display */}
       {damageDisplay && (
         <div className="absolute top-[-60px] right-[-20px] z-30">
           <div className={cn(
