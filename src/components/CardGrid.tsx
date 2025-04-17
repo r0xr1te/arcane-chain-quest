@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
 import { Card, ElementType } from "@/types/game";
@@ -419,24 +418,11 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
 
   return (
-    <div className="relative flex gap-4">
-      {damageDisplay && (
-        <div className="absolute top-[-60px] right-[-20px] z-30 animate-bounce">
-          <Badge className={cn(
-            'text-lg font-bold px-3 py-2 shadow-lg', 
-            getDamageColor(damageDisplay.type)
-          )}>
-            {damageDisplay.isHealing ? '+' : ''}{damageDisplay.value}
-            {damageDisplay.isHealing ? ' HP' : ' DMG'}
-          </Badge>
-        </div>
-      )}
-      
+    <div className="relative flex flex-col items-center gap-4 w-full">
       <div 
         ref={gridRef}
         className={cn(
-          "grid grid-cols-4 gap-2 w-full max-w-md mx-auto p-4 bg-game-ui/30 rounded-lg relative",
-          "fixed-game-grid touch-none",
+          "game-grid fixed-game-grid touch-none",
           disabled ? "opacity-70 pointer-events-none" : "cursor-pointer"
         )}
         onPointerMove={handlePointerMove}
@@ -445,6 +431,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Chain lines visualization */}
         {chainedCards.length > 0 && (
           <svg 
             className="absolute inset-0 pointer-events-none z-10"
@@ -479,10 +466,9 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
               id={`card-${card.id}`}
               key={card.id}
               className={cn(
-                "game-card aspect-square",
+                "game-card",
                 card.type,
-                card.selected && "selected",
-                card.selected && "scale-110 shadow-lg shadow-white/20 z-10"
+                card.selected && "selected"
               )}
               onPointerDown={(e) => handlePointerDown(e, card)}
               onTouchStart={(e) => handleTouchStart(e, card)}
@@ -495,7 +481,8 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-1 w-32 h-32 bg-game-ui/10 rounded-lg p-2 self-start">
+      {/* Opponent's grid preview */}
+      <div className="opponent-grid">
         {grid.map((row, rowIdx) => 
           row.map((card, colIdx) => (
             <div
@@ -511,6 +498,18 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
           ))
         )}
       </div>
+
+      {/* Damage display */}
+      {damageDisplay && (
+        <div className="absolute top-[-60px] right-[-20px] z-30">
+          <div className={cn(
+            'damage-badge',
+            getDamageColor(damageDisplay.type)
+          )}>
+            {damageDisplay.isHealing ? '+' : ''}{damageDisplay.value}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -89,15 +88,23 @@
 
 @layer components {
   .game-title {
-    @apply font-bold text-transparent bg-clip-text bg-gradient-to-br from-amber-300 to-amber-500 drop-shadow-lg;
+    @apply text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-amber-300 to-amber-500 drop-shadow-lg mb-2;
+  }
+  
+  .game-grid {
+    @apply grid grid-cols-4 gap-1.5 w-full max-w-[360px] mx-auto relative bg-game-ui/30 rounded-lg p-2;
+  }
+  
+  .opponent-grid {
+    @apply grid grid-cols-4 gap-0.5 w-full max-w-[120px] mx-auto bg-game-ui/10 rounded-lg p-1 fixed top-16 right-2;
   }
   
   .game-card {
-    @apply bg-game-ui rounded-lg shadow-lg relative cursor-pointer 
+    @apply aspect-square bg-game-ui rounded-lg shadow-lg relative cursor-pointer 
            transition-all duration-200 
            flex items-center justify-center overflow-hidden 
            border-2 border-opacity-60 hover:brightness-110;
-    touch-action: none; /* Disable browser handling of touch events on cards */
+    touch-action: none;
   }
   
   .game-card.selected {
@@ -125,14 +132,26 @@
     @apply w-12 h-12 rounded-full flex items-center justify-center animate-pulse-glow;
   }
   
+  .health-bar-container {
+    @apply w-full max-w-[200px] flex flex-col items-center gap-1;
+  }
+  
   .health-bar {
-    @apply h-4 rounded-full overflow-hidden relative;
+    @apply h-3 w-full rounded-full overflow-hidden relative bg-gray-800/50 backdrop-blur-sm;
   }
   
   .health-bar-fill {
     @apply h-full transition-all duration-300 ease-out;
   }
   
+  .character-info {
+    @apply flex items-center gap-2 text-sm;
+  }
+  
+  .character-level {
+    @apply flex items-center justify-center w-6 h-6 rounded-lg bg-blue-500/20 text-blue-300 font-semibold text-xs;
+  }
+
   .game-button {
     @apply px-4 py-2 rounded-full bg-game-uiAccent text-white font-semibold 
            hover:brightness-110 active:brightness-90 transition-all shadow-md;
