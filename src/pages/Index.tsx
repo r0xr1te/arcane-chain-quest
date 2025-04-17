@@ -6,9 +6,9 @@ import SpellEffect from "@/components/SpellEffect";
 import TurnIndicator from "@/components/TurnIndicator";
 import GameOverScreen from "@/components/GameOverScreen";
 import StartScreen from "@/components/StartScreen";
+import GameBackground from "@/components/GameBackground";
 import { Card, Character as CharacterType, ElementType, GameState, Spell } from "@/types/game";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -317,7 +317,12 @@ const Index = () => {
   };
 
   if (showStartScreen) {
-    return <StartScreen onStart={initGame} />;
+    return (
+      <>
+        <GameBackground />
+        <StartScreen onStart={initGame} />
+      </>
+    );
   }
 
   if (!gameState) {
@@ -325,61 +330,62 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-game-gradient flex flex-col relative p-4">
-      <div className="max-w-lg w-full mx-auto flex flex-col flex-1">
-        <h1 className="game-title text-3xl md:text-4xl text-center mb-4">Arcane Chain Quest</h1>
-        
-        {/* Enemy Character */}
-        <Character 
-          character={gameState.enemy} 
-          isEnemy={true} 
-          isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
-          isFrozen={gameState.enemyFrozen}
-        />
-        
-        {/* Turn Indicator */}
-        <TurnIndicator 
-          isPlayerTurn={gameState.isPlayerTurn}
-          turnCount={gameState.turnCount}
-        />
-        
-        {/* Card Grid */}
-        <div className="flex-1 flex items-center justify-center">
-          <CardGrid 
-            onChainComplete={handlePlayerChain}
-            disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
+    <>
+      <GameBackground />
+      <div className="min-h-screen w-full flex flex-col relative p-4 overflow-hidden">
+        <div className="max-w-lg w-full mx-auto flex flex-col flex-1 relative z-10">
+          <h1 className="game-title text-4xl md:text-5xl text-center mb-6 drop-shadow-2xl">
+            Arcane Chain Quest
+          </h1>
+          
+          <Character 
+            character={gameState.enemy} 
+            isEnemy={true} 
+            isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
+            isFrozen={gameState.enemyFrozen}
+          />
+          
+          <TurnIndicator 
+            isPlayerTurn={gameState.isPlayerTurn}
+            turnCount={gameState.turnCount}
+          />
+          
+          <div className="flex-1 flex items-center justify-center perspective-1000">
+            <div className="w-full transform-gpu transition-transform hover:scale-[1.02]">
+              <CardGrid 
+                onChainComplete={handlePlayerChain}
+                disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
+              />
+            </div>
+          </div>
+          
+          <Character 
+            character={gameState.player}
+            isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
+            isHealing={spellEffect !== null && spellEffect.isHealing}
           />
         </div>
         
-        {/* Player Character */}
-        <Character 
-          character={gameState.player}
-          isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
-          isHealing={spellEffect !== null && spellEffect.isHealing}
-        />
+        {spellEffect && (
+          <SpellEffect
+            type={spellEffect.type}
+            power={spellEffect.power}
+            isHealing={spellEffect.isHealing}
+            position={spellEffect.position}
+            onComplete={() => setSpellEffect(null)}
+          />
+        )}
+        
+        {gameState.gameStatus !== "playing" && (
+          <GameOverScreen 
+            status={gameState.gameStatus} 
+            player={gameState.player}
+            enemy={gameState.enemy}
+            onRestart={restartGame}
+          />
+        )}
       </div>
-      
-      {/* Spell Effect Animation */}
-      {spellEffect && (
-        <SpellEffect
-          type={spellEffect.type}
-          power={spellEffect.power}
-          isHealing={spellEffect.isHealing}
-          position={spellEffect.position}
-          onComplete={() => setSpellEffect(null)}
-        />
-      )}
-      
-      {/* Game Over Screen */}
-      {gameState.gameStatus !== "playing" && (
-        <GameOverScreen 
-          status={gameState.gameStatus} 
-          player={gameState.player}
-          enemy={gameState.enemy}
-          onRestart={restartGame}
-        />
-      )}
-    </div>
+    </>
   );
 };
 
