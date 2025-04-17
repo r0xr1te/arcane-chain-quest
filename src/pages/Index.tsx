@@ -9,6 +9,8 @@ import StartScreen from "@/components/StartScreen";
 import GameBackground from "@/components/GameBackground";
 import { Card, Character as CharacterType, ElementType, GameState, Spell } from "@/types/game";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -19,6 +21,26 @@ const Index = () => {
     isHealing: boolean;
     position: "player" | "enemy";
   } | null>(null);
+  const isMobile = useIsMobile();
+
+  // Prevent scrolling on mobile when the game is active
+  useEffect(() => {
+    if (gameState && gameState.gameStatus === "playing" && !showStartScreen) {
+      const handleTouchMove = (e: TouchEvent) => {
+        // Only prevent default for game area touches to allow scrolling elsewhere
+        const target = e.target as HTMLElement;
+        if (target.closest('.fixed-game-grid')) {
+          e.preventDefault();
+        }
+      };
+
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      
+      return () => {
+        document.removeEventListener('touchmove', handleTouchMove);
+      };
+    }
+  }, [gameState, showStartScreen]);
 
   const initGame = (playerName: string) => {
     const initialState: GameState = {
@@ -328,7 +350,7 @@ const Index = () => {
             turnCount={gameState.turnCount}
           />
           
-          <div className="flex-1 flex items-center justify-center perspective-1000 sticky top-1/4 md:top-1/3 z-20">
+          <div className="flex-1 flex items-center justify-center perspective-1000 z-20">
             <div className="w-full transform-gpu transition-transform hover:scale-[1.02]">
               <CardGrid 
                 onChainComplete={handlePlayerChain}

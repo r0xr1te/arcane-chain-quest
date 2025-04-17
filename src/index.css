@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -73,6 +74,16 @@
 
   body {
     @apply bg-game-bg text-foreground;
+    overscroll-behavior: none; /* Prevent pull-to-refresh and bounce effects */
+    touch-action: none; /* Disable browser handling of all panning and zooming gestures */
+  }
+
+  /* Ensure all touch events are properly handled */
+  .fixed-game-grid {
+    touch-action: none !important; /* Disable browser's default touch actions */
+    position: relative;
+    isolation: isolate;
+    z-index: 20;
   }
 }
 
@@ -86,11 +97,12 @@
            transition-all duration-200 
            flex items-center justify-center overflow-hidden 
            border-2 border-opacity-60 hover:brightness-110;
+    touch-action: none; /* Disable browser handling of touch events on cards */
   }
   
   .game-card.selected {
     @apply border-white border-opacity-100 shadow-xl transform scale-110 z-10
-           brightness-125 ring-2 ring-white ring-opacity-50;
+           brightness-125 ring-4 ring-white ring-opacity-50;
   }
 
   .game-card.fire {

@@ -16,6 +16,20 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const touchRef = useRef<boolean>(false);
 
+  useEffect(() => {
+    const preventScroll = (e: TouchEvent) => {
+      if (isDragging && gridRef.current?.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    
+    return () => {
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, [isDragging]);
+
   const checkForPossibleChains = (currentGrid: Card[][]) => {
     const cards = currentGrid.flat();
     for (let i = 0; i < cards.length; i++) {
@@ -53,7 +67,6 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     const initialGrid = generateGrid();
     setGrid(initialGrid);
     
-    // Check if initial grid has possible chains
     if (!checkForPossibleChains(initialGrid)) {
       toast.info("No possible chains! Refreshing board...");
       setGrid(generateGrid());
@@ -89,27 +102,21 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     if (disabled) return;
     
     if (chainedCards.length === 0) {
-      // First card in chain
       setChainedCards([card]);
       
-      // Update grid to show selection
       const newGrid = [...grid];
       newGrid[card.row][card.col].selected = true;
       setGrid(newGrid);
     } else {
       const lastCard = chainedCards[chainedCards.length - 1];
       
-      // Check if card is adjacent to last card in chain
       if (isAdjacent(lastCard, card)) {
-        // Check if card is already in chain
         if (isCardInChain(card)) {
-          // If it's the previous card, remove the last card (backtracking)
           if (chainedCards.length > 1 && card.id === chainedCards[chainedCards.length - 2].id) {
             const newChain = [...chainedCards];
             const removedCard = newChain.pop();
             setChainedCards(newChain);
             
-            // Update grid to remove selection
             if (removedCard) {
               const newGrid = [...grid];
               newGrid[removedCard.row][removedCard.col].selected = false;
@@ -117,11 +124,9 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
             }
           }
         } else {
-          // Add card to chain
           const newChain = [...chainedCards, card];
           setChainedCards(newChain);
           
-          // Update grid to show selection
           const newGrid = [...grid];
           newGrid[card.row][card.col].selected = true;
           setGrid(newGrid);
@@ -133,20 +138,22 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   const handlePointerDown = (e: React.PointerEvent, card: Card) => {
     if (disabled) return;
     
+    e.preventDefault();
+    
     setIsDragging(true);
     touchRef.current = e.pointerType === 'touch';
     
-    // Reset chain
     setChainedCards([]);
     const newGrid = grid.map(row => row.map(c => ({ ...c, selected: false })));
     setGrid(newGrid);
     
-    // Start new chain with this card
     handleCardInteraction(card);
   };
   
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging || disabled) return;
+    
+    e.preventDefault();
     
     const gridRect = gridRef.current?.getBoundingClientRect();
     if (!gridRect) return;
@@ -154,7 +161,6 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     const clientX = e.clientX;
     const clientY = e.clientY;
     
-    // Check if pointer is over a card
     grid.flat().forEach(card => {
       const cardElement = document.getElementById(`card-${card.id}`);
       if (cardElement) {
@@ -171,16 +177,16 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     });
   };
   
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     if (!isDragging || disabled) return;
+    
+    e.preventDefault();
     
     setIsDragging(false);
     
-    // Complete chain if it's valid (2+ cards now, changed from 3)
     if (chainedCards.length >= 2) {
       onChainComplete([...chainedCards]);
       
-      // Show feedback
       const elementCounts = chainedCards.reduce((counts, card) => {
         counts[card.type] = (counts[card.type] || 0) + 1;
         return counts;
@@ -216,13 +222,11 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
         description: `${chainedCards.length} card chain created!`
       });
       
-      // Reset the grid with new cards
       setTimeout(() => {
         setChainedCards([]);
         const newGrid = generateGrid();
         setGrid(newGrid);
         
-        // Check if new grid has possible chains
         if (!checkForPossibleChains(newGrid)) {
           toast.info("No possible chains! Refreshing board...");
           setTimeout(() => {
@@ -235,7 +239,110 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
         description: "Chains must be at least 2 cards long."
       });
       
-      // Reset selection without regenerating
+      const newGrid = grid.map(row => row.map(c => ({ ...c, selected: false })));
+      setGrid(newGrid);
+      setChainedCards([]);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, card: Card) => {
+    if (disabled) return;
+    e.preventDefault();
+    
+    setIsDragging(true);
+    touchRef.current = true;
+    
+    setChainedCards([]);
+    const newGrid = grid.map(row => row.map(c => ({ ...c, selected: false })));
+    setGrid(newGrid);
+    
+    handleCardInteraction(card);
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || disabled) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    
+    grid.flat().forEach(card => {
+      const cardElement = document.getElementById(`card-${card.id}`);
+      if (cardElement) {
+        const rect = cardElement.getBoundingClientRect();
+        if (
+          clientX >= rect.left && 
+          clientX <= rect.right && 
+          clientY >= rect.top && 
+          clientY <= rect.bottom
+        ) {
+          handleCardInteraction(card);
+        }
+      }
+    });
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging || disabled) return;
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (chainedCards.length >= 2) {
+      onChainComplete([...chainedCards]);
+      
+      const elementCounts = chainedCards.reduce((counts, card) => {
+        counts[card.type] = (counts[card.type] || 0) + 1;
+        return counts;
+      }, {} as Record<ElementType, number>);
+      
+      const mainElementType = Object.entries(elementCounts)
+        .sort((a, b) => b[1] - a[1])[0][0] as ElementType;
+      
+      const allSameElement = Object.keys(elementCounts).length === 1;
+      const length = chainedCards.length;
+      
+      let spellName = "";
+      if (allSameElement) {
+        switch (mainElementType) {
+          case 'fire':
+            spellName = length >= 5 ? "Fire Storm" : "Fireball";
+            break;
+          case 'nature':
+            spellName = length >= 5 ? "Nature's Blessing" : "Heal";
+            break;
+          case 'ice':
+            spellName = length >= 5 ? "Arctic Freeze" : "Ice Bolt";
+            break;
+          case 'mystic':
+            spellName = length >= 5 ? "Mystic Surge" : "Arcane Bolt";
+            break;
+        }
+      } else {
+        spellName = "Mixed Chain";
+      }
+
+      toast.success(`Cast ${spellName}!`, {
+        description: `${chainedCards.length} card chain created!`
+      });
+      
+      setTimeout(() => {
+        setChainedCards([]);
+        const newGrid = generateGrid();
+        setGrid(newGrid);
+        
+        if (!checkForPossibleChains(newGrid)) {
+          toast.info("No possible chains! Refreshing board...");
+          setTimeout(() => {
+            setGrid(generateGrid());
+          }, 1000);
+        }
+      }, 500);
+    } else if (chainedCards.length > 0) {
+      toast.error("Chain too short!", {
+        description: "Chains must be at least 2 cards long."
+      });
+      
       const newGrid = grid.map(row => row.map(c => ({ ...c, selected: false })));
       setGrid(newGrid);
       setChainedCards([]);
@@ -258,11 +365,14 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
         ref={gridRef}
         className={cn(
           "grid grid-cols-4 gap-2 w-full max-w-md mx-auto p-4 bg-game-ui/30 rounded-lg relative",
+          "fixed-game-grid touch-none",
           disabled ? "opacity-70 pointer-events-none" : "cursor-pointer"
         )}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {chainedCards.length > 0 && (
           <svg 
@@ -304,6 +414,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
                 card.selected && "scale-110 shadow-lg shadow-white/20 z-10"
               )}
               onPointerDown={(e) => handlePointerDown(e, card)}
+              onTouchStart={(e) => handleTouchStart(e, card)}
             >
               <div className={`card-element ${card.type}`}>
                 {getCardIcon(card.type)}
