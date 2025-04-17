@@ -1,7 +1,6 @@
 
 import { cn } from "@/lib/utils";
 import { Character as CharacterType } from "@/types/game";
-import { useRef, useEffect, useState } from "react";
 import { Diamond } from "lucide-react";
 
 interface CharacterProps {
@@ -23,19 +22,19 @@ const Character: React.FC<CharacterProps> = ({
   
   return (
     <div className={cn(
-      "health-bar-container",
-      isEnemy ? "mb-4" : "mt-4"
+      "health-bar-container fixed z-30",
+      isEnemy ? "top-2 left-2" : "top-2 right-2"
     )}>
-      <div className="character-info">
+      <div className="character-info mb-1">
         <span className="character-level">
           <Diamond className="w-3 h-3" />
         </span>
-        <span className="font-semibold text-white">{character.name}</span>
-        <span className="text-white/90">{character.currentHealth}</span>
+        <span className="font-semibold text-white text-xs">{character.name}</span>
+        <span className="text-white/90 text-xs">{character.currentHealth}</span>
       </div>
       
       <div className={cn(
-        "health-bar",
+        "health-bar w-32",
         isTakingDamage && "animate-shake",
         isFrozen && "opacity-80"
       )}>

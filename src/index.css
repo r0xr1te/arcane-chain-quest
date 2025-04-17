@@ -92,11 +92,11 @@
   }
   
   .game-grid {
-    @apply grid grid-cols-4 gap-1.5 w-full max-w-[360px] mx-auto relative bg-game-ui/30 rounded-lg p-2;
+    @apply grid grid-cols-4 gap-1.5 w-full max-w-[360px] mx-auto relative bg-game-ui/30 rounded-lg p-2 mt-12;
   }
   
   .opponent-grid {
-    @apply grid grid-cols-4 gap-0.5 w-full max-w-[120px] mx-auto bg-game-ui/10 rounded-lg p-1 fixed top-16 right-2;
+    @apply grid grid-cols-4 gap-0.5 w-full max-w-[120px] mx-auto bg-game-ui/10 rounded-lg p-1 fixed top-16 left-2;
   }
   
   .game-card {
