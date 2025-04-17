@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
 import { Card, ElementType } from "@/types/game";
@@ -17,28 +16,48 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const touchRef = useRef<boolean>(false);
 
+  const checkForPossibleChains = (currentGrid: Card[][]) => {
+    const cards = currentGrid.flat();
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const adjacentCards = cards.filter(c => 
+        c.id !== card.id && isAdjacent(card, c)
+      );
+      if (adjacentCards.length > 0) {
+        return true; // Found at least one possible chain
+      }
+    }
+    return false; // No possible chains found
+  };
+
   const generateGrid = () => {
     const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic'];
-    const newGrid: Card[][] = [];
-
-    for (let i = 0; i < 4; i++) {
-      newGrid[i] = [];
-      for (let j = 0; j < 4; j++) {
-        newGrid[i][j] = {
+    let newGrid: Card[][];
+    
+    do {
+      newGrid = Array(4).fill(null).map((_, i) => 
+        Array(4).fill(null).map((_, j) => ({
           id: `${i}-${j}`,
           type: elements[Math.floor(Math.random() * elements.length)],
           row: i,
           col: j,
           selected: false
-        };
-      }
-    }
+        }))
+      );
+    } while (!checkForPossibleChains(newGrid)); // Regenerate if no chains possible
 
     return newGrid;
   };
 
   useEffect(() => {
-    setGrid(generateGrid());
+    const initialGrid = generateGrid();
+    setGrid(initialGrid);
+    
+    // Check if initial grid has possible chains
+    if (!checkForPossibleChains(initialGrid)) {
+      toast.info("No possible chains! Refreshing board...");
+      setGrid(generateGrid());
+    }
   }, []);
 
   const getCardIcon = (type: ElementType) => {
@@ -157,8 +176,8 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     
     setIsDragging(false);
     
-    // Complete chain if it's valid (3+ cards)
-    if (chainedCards.length >= 3) {
+    // Complete chain if it's valid (2+ cards now, changed from 3)
+    if (chainedCards.length >= 2) {
       onChainComplete([...chainedCards]);
       
       // Show feedback
@@ -200,11 +219,20 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
       // Reset the grid with new cards
       setTimeout(() => {
         setChainedCards([]);
-        setGrid(generateGrid());
+        const newGrid = generateGrid();
+        setGrid(newGrid);
+        
+        // Check if new grid has possible chains
+        if (!checkForPossibleChains(newGrid)) {
+          toast.info("No possible chains! Refreshing board...");
+          setTimeout(() => {
+            setGrid(generateGrid());
+          }, 1000);
+        }
       }, 500);
     } else if (chainedCards.length > 0) {
       toast.error("Chain too short!", {
-        description: "Chains must be at least 3 cards long."
+        description: "Chains must be at least 2 cards long."
       });
       
       // Reset selection without regenerating
