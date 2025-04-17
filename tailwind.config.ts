@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				game: {
+					fire: '#f97316',
+					nature: '#22c55e',
+					ice: '#3b82f6',
+					mystic: '#8b5cf6',
+					bg: '#1C1325',
+					ui: '#382B47',
+					uiAccent: '#9b87f5'
+				},
+				health: {
+					player: '#3b82f6',
+					enemy: '#ef4444',
 				}
 			},
 			borderRadius: {
@@ -84,11 +98,53 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': { 
+						opacity: '1',
+						filter: 'brightness(1)'
+					},
+					'50%': {  
+						opacity: '0.8',
+						filter: 'brightness(1.2)'
+					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'scale-in': {
+					'0%': { transform: 'scale(0.8)', opacity: '0' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'scale-out': {
+					'0%': { transform: 'scale(1)', opacity: '1' },
+					'100%': { transform: 'scale(0.8)', opacity: '0' }
+				},
+				'slide-in': {
+					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
+				'damage-shake': {
+					'0%, 100%': { transform: 'translateX(0)' },
+					'20%': { transform: 'translateX(-10px)' },
+					'40%': { transform: 'translateX(10px)' },
+					'60%': { transform: 'translateX(-5px)' },
+					'80%': { transform: 'translateX(5px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'scale-in': 'scale-in 0.2s ease-out',
+				'scale-out': 'scale-out 0.2s ease-in',
+				'slide-in': 'slide-in 0.3s ease-out',
+				'damage-shake': 'damage-shake 0.5s ease-in-out'
+			},
+			backgroundImage: {
+				'game-gradient': 'linear-gradient(180deg, #1C1325 0%, #2D1F3C 100%)'
 			}
 		}
 	},

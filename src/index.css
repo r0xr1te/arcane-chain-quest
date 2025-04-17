@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,22 +34,6 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -79,14 +64,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -96,6 +73,63 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-game-bg text-foreground;
+  }
+}
+
+@layer components {
+  .game-title {
+    @apply font-bold text-transparent bg-clip-text bg-gradient-to-br from-amber-300 to-amber-500 drop-shadow-lg;
+  }
+  
+  .game-card {
+    @apply bg-game-ui rounded-lg shadow-lg relative cursor-pointer transition-all duration-200 
+           flex items-center justify-center overflow-hidden 
+           border-2 border-opacity-60;
+  }
+  
+  .game-card.selected {
+    @apply border-white border-opacity-100 shadow-xl transform scale-105 z-10;
+  }
+
+  .game-card.fire {
+    @apply border-game-fire;
+  }
+  
+  .game-card.nature {
+    @apply border-game-nature;
+  }
+  
+  .game-card.ice {
+    @apply border-game-ice;
+  }
+  
+  .game-card.mystic {
+    @apply border-game-mystic;
+  }
+  
+  .card-element {
+    @apply w-12 h-12 rounded-full flex items-center justify-center animate-pulse-glow;
+  }
+  
+  .health-bar {
+    @apply h-4 rounded-full overflow-hidden relative;
+  }
+  
+  .health-bar-fill {
+    @apply h-full transition-all duration-300 ease-out;
+  }
+  
+  .game-button {
+    @apply px-4 py-2 rounded-full bg-game-uiAccent text-white font-semibold 
+           hover:brightness-110 active:brightness-90 transition-all shadow-md;
+  }
+  
+  .spell-effect {
+    @apply absolute pointer-events-none z-50 animate-scale-in;
+  }
+  
+  .character {
+    @apply w-24 h-24 relative flex items-center justify-center;
   }
 }
