@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import CardGrid from "@/components/CardGrid";
 import Character from "@/components/Character";
@@ -85,65 +84,47 @@ const Index = () => {
   };
 
   const determineSpell = (cards: Card[]): Spell => {
-    const elementCounts = cards.reduce((counts, card) => {
-      counts[card.type] = (counts[card.type] || 0) + 1;
-      return counts;
-    }, {} as Record<ElementType, number>);
-    
-    const mainElementType = Object.entries(elementCounts)
-      .sort((a, b) => b[1] - a[1])[0][0] as ElementType;
-    
-    const isAllSameElement = Object.keys(elementCounts).length === 1;
-    
+    const elementType = cards[0].type;
+    const length = cards.length;
     const power = calculateSpellPower(cards);
     
-    if (isAllSameElement) {
-      switch (mainElementType) {
-        case "fire":
-          return {
-            name: cards.length >= 5 ? "Fire Storm" : "Fireball",
-            element: "fire",
-            power,
-            description: `Deal ${power} damage to the enemy`,
-            chainLength: cards.length
-          };
-          
-        case "nature":
-          return {
-            name: cards.length >= 5 ? "Nature's Blessing" : "Healing Touch",
-            element: "nature",
-            power: Math.floor(power * 0.8),
-            description: `Restore ${Math.floor(power * 0.8)} health`,
-            chainLength: cards.length
-          };
-          
-        case "ice":
-          return {
-            name: cards.length >= 5 ? "Arctic Freeze" : "Ice Bolt",
-            element: "ice",
-            power: Math.floor(power * 0.9),
-            description: `Deal ${Math.floor(power * 0.9)} damage and ${cards.length * 10}% chance to freeze`,
-            chainLength: cards.length
-          };
-          
-        case "mystic":
-          return {
-            name: cards.length >= 5 ? "Mystic Explosion" : "Arcane Bolt",
-            element: "mystic",
-            power: Math.floor(power * 1.2),
-            description: `Deal ${Math.floor(power * 1.2)} arcane damage`,
-            chainLength: cards.length
-          };
-      }
+    switch (elementType) {
+      case "fire":
+        return {
+          name: length >= 5 ? "Fire Storm" : "Fireball",
+          element: "fire",
+          power,
+          description: `Deal ${power} damage to the enemy`,
+          chainLength: length
+        };
+        
+      case "nature":
+        return {
+          name: length >= 5 ? "Nature's Blessing" : "Healing Touch",
+          element: "nature",
+          power: Math.floor(power * 0.8),
+          description: `Restore ${Math.floor(power * 0.8)} health`,
+          chainLength: length
+        };
+        
+      case "ice":
+        return {
+          name: length >= 5 ? "Arctic Freeze" : "Ice Bolt",
+          element: "ice",
+          power: Math.floor(power * 0.9),
+          description: `Deal ${Math.floor(power * 0.9)} damage and ${length * 10}% chance to freeze`,
+          chainLength: length
+        };
+        
+      default: // mystic
+        return {
+          name: length >= 5 ? "Mystic Explosion" : "Arcane Bolt",
+          element: "mystic",
+          power: Math.floor(power * 1.2),
+          description: `Deal ${Math.floor(power * 1.2)} arcane damage`,
+          chainLength: length
+        };
     }
-    
-    return {
-      name: "Chaotic Blast",
-      element: mainElementType,
-      power: Math.floor(power * 0.8),
-      description: `Deal ${Math.floor(power * 0.8)} mixed damage`,
-      chainLength: cards.length
-    };
   };
 
   const handlePlayerChain = (cards: Card[]) => {

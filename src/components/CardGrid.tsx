@@ -35,7 +35,9 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
       const adjacentCards = cards.filter(c => 
-        c.id !== card.id && isAdjacent(card, c)
+        c.id !== card.id && 
+        isAdjacent(card, c) &&
+        c.type === card.type
       );
       if (adjacentCards.length > 0) {
         return true; // Found at least one possible chain
@@ -109,6 +111,10 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
       setGrid(newGrid);
     } else {
       const lastCard = chainedCards[chainedCards.length - 1];
+      
+      if (lastCard.type !== card.type) {
+        return; // Don't allow connecting different element types
+      }
       
       if (isAdjacent(lastCard, card)) {
         if (isCardInChain(card)) {
