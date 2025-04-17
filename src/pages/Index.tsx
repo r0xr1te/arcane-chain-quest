@@ -10,6 +10,7 @@ import { Card, Character as CharacterType, ElementType, GameState, Spell } from 
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -39,9 +40,37 @@ const Index = () => {
     }
   }, [gameState, showStartScreen]);
 
+  const getElementIcon = (type: ElementType, size: number = 24) => {
+    switch (type) {
+      case 'fire':
+        return <Flame className="text-game-fire" size={size} />;
+      case 'nature':
+        return <Leaf className="text-game-nature" size={size} />;
+      case 'ice':
+        return <Snowflake className="text-game-ice" size={size} />;
+      case 'mystic':
+        return <Sparkles className="text-game-mystic" size={size} />;
+      default:
+        return null;
+    }
+  };
+
   const initGame = (playerName: string) => {
+    const createInitialGrid = () => {
+      const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic'];
+      return Array(4).fill(null).map((_, i) => 
+        Array(4).fill(null).map((_, j) => ({
+          id: `${i}-${j}`,
+          type: elements[Math.floor(Math.random() * elements.length)],
+          row: i,
+          col: j,
+          selected: false
+        }))
+      );
+    };
+
     const initialState: GameState = {
-      grid: [],
+      grid: createInitialGrid(),
       player: {
         name: playerName,
         maxHealth: 100,
@@ -303,48 +332,50 @@ const Index = () => {
   return (
     <>
       <GameBackground />
-      <div className="min-h-screen w-full flex flex-col relative p-4 overflow-hidden">
-        <div className="max-w-lg w-full mx-auto flex flex-col flex-1 relative z-10">
-          <div className="opponent-grid">
-            {gameState.grid.flat().slice(0, 16).map((card, index) => (
-              <div
-                key={`opponent-${index}`}
-                className={cn(
-                  "aspect-square rounded-sm opacity-50",
-                  card.type === 'fire' && "bg-game-fire",
-                  card.type === 'nature' && "bg-game-nature",
-                  card.type === 'ice' && "bg-game-ice",
-                  card.type === 'mystic' && "bg-game-mystic"
-                )}
-              />
-            ))}
-          </div>
-          
-          <TurnIndicator 
-            isPlayerTurn={gameState.isPlayerTurn}
-            turnCount={gameState.turnCount}
-          />
-          
-          <Character 
-            character={gameState.enemy} 
-            isEnemy={true} 
-            isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
-            isFrozen={gameState.enemyFrozen}
-          />
-          
-          <Character 
-            character={gameState.player}
-            isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
-            isHealing={spellEffect !== null && spellEffect.isHealing}
-          />
-          
-          <div className="flex-1 flex items-center justify-center perspective-1000 z-20 mb-12">
-            <div className="w-full transform-gpu">
-              <CardGrid 
-                onChainComplete={handlePlayerChain}
-                disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
-              />
+      <div className="game-container w-full overflow-hidden">
+        <TurnIndicator 
+          isPlayerTurn={gameState.isPlayerTurn}
+          turnCount={gameState.turnCount}
+        />
+        
+        <Character 
+          character={gameState.enemy} 
+          isEnemy={true} 
+          isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
+          isFrozen={gameState.enemyFrozen}
+        />
+        
+        <div className="opponent-grid">
+          {gameState.grid.flat().slice(0, 16).map((card, index) => (
+            <div
+              key={`opponent-${index}`}
+              className="opponent-card"
+            >
+              <div className={cn(
+                "opponent-element",
+                card.type === 'fire' && "bg-game-fire/20",
+                card.type === 'nature' && "bg-game-nature/20",
+                card.type === 'ice' && "bg-game-ice/20",
+                card.type === 'mystic' && "bg-game-mystic/20"
+              )}>
+                {getElementIcon(card.type, 16)}
+              </div>
             </div>
+          ))}
+        </div>
+        
+        <Character 
+          character={gameState.player}
+          isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
+          isHealing={spellEffect !== null && spellEffect.isHealing}
+        />
+        
+        <div className="flex-1 flex items-center justify-center perspective-1000 z-20 mb-12">
+          <div className="w-full transform-gpu">
+            <CardGrid 
+              onChainComplete={handlePlayerChain}
+              disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
+            />
           </div>
         </div>
         

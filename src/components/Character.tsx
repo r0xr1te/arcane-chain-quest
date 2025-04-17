@@ -22,19 +22,19 @@ const Character: React.FC<CharacterProps> = ({
   
   return (
     <div className={cn(
-      "health-bar-container fixed z-30",
-      isEnemy ? "top-4 right-4" : "bottom-4 left-4"
+      "health-bar-container absolute z-30",
+      isEnemy ? "top-3 right-3" : "bottom-3 left-3"
     )}>
-      <div className="character-info mb-1 flex items-center gap-1.5">
+      <div className="character-info mb-1 flex items-center gap-1">
         <span className="character-level">
-          <Diamond className="w-3 h-3" />
+          <Diamond className="w-2.5 h-2.5" />
         </span>
         <span className="font-semibold text-white text-xs">{character.name}</span>
         <span className="text-white/90 text-xs">{character.currentHealth}</span>
       </div>
       
       <div className={cn(
-        "health-bar w-28",
+        "health-bar w-24",
         isTakingDamage && "animate-shake",
         isFrozen && "opacity-80"
       )}>
