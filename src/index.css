@@ -92,11 +92,11 @@
   }
   
   .game-grid {
-    @apply grid grid-cols-4 gap-1.5 w-full max-w-[360px] mx-auto relative bg-game-ui/30 rounded-lg p-2 mt-12;
+    @apply grid grid-cols-4 gap-1.5 w-full max-w-[340px] mx-auto relative bg-game-ui/30 rounded-lg p-2;
   }
   
   .opponent-grid {
-    @apply grid grid-cols-4 gap-0.5 w-full max-w-[120px] mx-auto bg-game-ui/10 rounded-lg p-1 fixed top-16 left-2;
+    @apply grid grid-cols-4 gap-0.5 w-full max-w-[120px] bg-game-ui/10 rounded-lg p-1 fixed top-4 right-4 z-30;
   }
   
   .game-card {
@@ -133,11 +133,11 @@
   }
   
   .health-bar-container {
-    @apply w-full max-w-[200px] flex flex-col items-center gap-1;
+    @apply w-32 flex flex-col items-start gap-0.5;
   }
   
   .health-bar {
-    @apply h-3 w-full rounded-full overflow-hidden relative bg-gray-800/50 backdrop-blur-sm;
+    @apply h-2.5 w-full rounded-full overflow-hidden relative bg-gray-800/50 backdrop-blur-sm;
   }
   
   .health-bar-fill {
@@ -145,11 +145,11 @@
   }
   
   .character-info {
-    @apply flex items-center gap-2 text-sm;
+    @apply flex items-center gap-1 text-xs;
   }
   
   .character-level {
-    @apply flex items-center justify-center w-6 h-6 rounded-lg bg-blue-500/20 text-blue-300 font-semibold text-xs;
+    @apply flex items-center justify-center w-5 h-5 rounded-lg bg-blue-500/20 text-blue-300 font-semibold text-xs;
   }
 
   .game-button {

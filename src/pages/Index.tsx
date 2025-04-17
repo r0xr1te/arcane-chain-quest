@@ -9,8 +9,7 @@ import GameBackground from "@/components/GameBackground";
 import { Card, Character as CharacterType, ElementType, GameState, Spell } from "@/types/game";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -306,15 +305,26 @@ const Index = () => {
       <GameBackground />
       <div className="min-h-screen w-full flex flex-col relative p-4 overflow-hidden">
         <div className="max-w-lg w-full mx-auto flex flex-col flex-1 relative z-10">
-          <div className="flex-1 flex items-center justify-center perspective-1000 z-20">
-            <div className="w-full transform-gpu">
-              <CardGrid 
-                onChainComplete={handlePlayerChain}
-                disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
+          <div className="opponent-grid">
+            {gameState.grid.flat().slice(0, 16).map((card, index) => (
+              <div
+                key={`opponent-${index}`}
+                className={cn(
+                  "aspect-square rounded-sm opacity-50",
+                  card.type === 'fire' && "bg-game-fire",
+                  card.type === 'nature' && "bg-game-nature",
+                  card.type === 'ice' && "bg-game-ice",
+                  card.type === 'mystic' && "bg-game-mystic"
+                )}
               />
-            </div>
+            ))}
           </div>
-
+          
+          <TurnIndicator 
+            isPlayerTurn={gameState.isPlayerTurn}
+            turnCount={gameState.turnCount}
+          />
+          
           <Character 
             character={gameState.enemy} 
             isEnemy={true} 
@@ -328,10 +338,14 @@ const Index = () => {
             isHealing={spellEffect !== null && spellEffect.isHealing}
           />
           
-          <TurnIndicator 
-            isPlayerTurn={gameState.isPlayerTurn}
-            turnCount={gameState.turnCount}
-          />
+          <div className="flex-1 flex items-center justify-center perspective-1000 z-20 mb-12">
+            <div className="w-full transform-gpu">
+              <CardGrid 
+                onChainComplete={handlePlayerChain}
+                disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
+              />
+            </div>
+          </div>
         </div>
         
         {spellEffect && (

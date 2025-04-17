@@ -481,24 +481,6 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
         )}
       </div>
 
-      {/* Opponent's grid preview */}
-      <div className="opponent-grid">
-        {grid.map((row, rowIdx) => 
-          row.map((card, colIdx) => (
-            <div
-              key={`opponent-${card.id}`}
-              className={cn(
-                "aspect-square rounded-sm opacity-50",
-                card.type === 'fire' && "bg-game-fire",
-                card.type === 'nature' && "bg-game-nature",
-                card.type === 'ice' && "bg-game-ice",
-                card.type === 'mystic' && "bg-game-mystic"
-              )}
-            />
-          ))
-        )}
-      </div>
-
       {/* Damage display */}
       {damageDisplay && (
         <div className="absolute top-[-60px] right-[-20px] z-30">

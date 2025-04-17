@@ -23,9 +23,9 @@ const Character: React.FC<CharacterProps> = ({
   return (
     <div className={cn(
       "health-bar-container fixed z-30",
-      isEnemy ? "top-2 left-2" : "top-2 right-2"
+      isEnemy ? "top-4 right-4" : "bottom-4 left-4"
     )}>
-      <div className="character-info mb-1">
+      <div className="character-info mb-1 flex items-center gap-1.5">
         <span className="character-level">
           <Diamond className="w-3 h-3" />
         </span>
@@ -34,7 +34,7 @@ const Character: React.FC<CharacterProps> = ({
       </div>
       
       <div className={cn(
-        "health-bar w-32",
+        "health-bar w-28",
         isTakingDamage && "animate-shake",
         isFrozen && "opacity-80"
       )}>
