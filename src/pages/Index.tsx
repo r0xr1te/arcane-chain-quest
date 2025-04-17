@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import CardGrid from "@/components/CardGrid";
 import Character from "@/components/Character";
@@ -309,23 +310,25 @@ const Index = () => {
       <GameBackground />
       <div className="min-h-screen w-full flex flex-col relative p-4 overflow-hidden">
         <div className="max-w-lg w-full mx-auto flex flex-col flex-1 relative z-10">
-          <h1 className="game-title text-4xl md:text-5xl text-center mb-6 drop-shadow-2xl">
+          <h1 className="game-title text-4xl md:text-5xl text-center mb-4 md:mb-6 drop-shadow-2xl">
             Arcane Chain Quest
           </h1>
           
-          <Character 
-            character={gameState.enemy} 
-            isEnemy={true} 
-            isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
-            isFrozen={gameState.enemyFrozen}
-          />
+          <div className="flex-none">
+            <Character 
+              character={gameState.enemy} 
+              isEnemy={true} 
+              isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
+              isFrozen={gameState.enemyFrozen}
+            />
+          </div>
           
           <TurnIndicator 
             isPlayerTurn={gameState.isPlayerTurn}
             turnCount={gameState.turnCount}
           />
           
-          <div className="flex-1 flex items-center justify-center perspective-1000">
+          <div className="flex-1 flex items-center justify-center perspective-1000 sticky top-1/4 md:top-1/3 z-20">
             <div className="w-full transform-gpu transition-transform hover:scale-[1.02]">
               <CardGrid 
                 onChainComplete={handlePlayerChain}
@@ -334,11 +337,13 @@ const Index = () => {
             </div>
           </div>
           
-          <Character 
-            character={gameState.player}
-            isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
-            isHealing={spellEffect !== null && spellEffect.isHealing}
-          />
+          <div className="flex-none">
+            <Character 
+              character={gameState.player}
+              isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
+              isHealing={spellEffect !== null && spellEffect.isHealing}
+            />
+          </div>
         </div>
         
         {spellEffect && (
