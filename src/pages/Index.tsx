@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import CardGrid from "@/components/CardGrid";
 import Character from "@/components/Character";
@@ -10,6 +11,7 @@ import { Card, Character as CharacterType, ElementType, GameState, Spell } from 
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -162,7 +164,7 @@ const Index = () => {
           };
         });
         
-        toast.success(`Healed for ${spell.power} health!`);
+        // Instead of toast, the damage is now shown as a badge in CardGrid
       } else {
         const newEnemyHealth = Math.max(0, gameState.enemy.currentHealth - spell.power);
         
@@ -193,8 +195,6 @@ const Index = () => {
         
         if (newGameStatus === "playerWon") {
           toast.success("Victory! You defeated the enemy!");
-        } else {
-          toast.success(`Dealt ${spell.power} damage!`);
         }
       }
       
@@ -278,8 +278,6 @@ const Index = () => {
       
       if (newGameStatus === "enemyWon") {
         toast.error("Defeat! You were defeated by the enemy!");
-      } else {
-        toast.error(`Enemy dealt ${spell.power} damage!`);
       }
       
       setTimeout(() => {

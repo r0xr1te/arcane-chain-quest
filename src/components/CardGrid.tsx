@@ -1,8 +1,10 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
 import { Card, ElementType } from "@/types/game";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Badge } from "./ui/badge";
 
 interface CardGridProps {
   onChainComplete: (cards: Card[]) => void;
@@ -13,8 +15,14 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   const [grid, setGrid] = useState<Card[][]>([]);
   const [chainedCards, setChainedCards] = useState<Card[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [damageDisplay, setDamageDisplay] = useState<{
+    value: number;
+    type: ElementType;
+    isHealing: boolean;
+  } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const touchRef = useRef<boolean>(false);
+  const damageTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const preventScroll = (e: TouchEvent) => {
@@ -44,6 +52,17 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
       }
     }
     return false; // No possible chains found
+  };
+
+  const generateSingleCard = (row: number, col: number): Card => {
+    const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic'];
+    return {
+      id: `${row}-${col}`,
+      type: elements[Math.floor(Math.random() * elements.length)],
+      row,
+      col,
+      selected: false
+    };
   };
 
   const generateGrid = () => {
@@ -193,44 +212,52 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     if (chainedCards.length >= 2) {
       onChainComplete([...chainedCards]);
       
-      const elementCounts = chainedCards.reduce((counts, card) => {
-        counts[card.type] = (counts[card.type] || 0) + 1;
-        return counts;
-      }, {} as Record<ElementType, number>);
-      
-      const mainElementType = Object.entries(elementCounts)
-        .sort((a, b) => b[1] - a[1])[0][0] as ElementType;
-      
-      const allSameElement = Object.keys(elementCounts).length === 1;
+      const elementType = chainedCards[0].type;
       const length = chainedCards.length;
       
       let spellName = "";
-      if (allSameElement) {
-        switch (mainElementType) {
-          case 'fire':
-            spellName = length >= 5 ? "Fire Storm" : "Fireball";
-            break;
-          case 'nature':
-            spellName = length >= 5 ? "Nature's Blessing" : "Heal";
-            break;
-          case 'ice':
-            spellName = length >= 5 ? "Arctic Freeze" : "Ice Bolt";
-            break;
-          case 'mystic':
-            spellName = length >= 5 ? "Mystic Surge" : "Arcane Bolt";
-            break;
-        }
-      } else {
-        spellName = "Mixed Chain";
+      switch (elementType) {
+        case 'fire':
+          spellName = length >= 5 ? "Fire Storm" : "Fireball";
+          break;
+        case 'nature':
+          spellName = length >= 5 ? "Nature's Blessing" : "Heal";
+          break;
+        case 'ice':
+          spellName = length >= 5 ? "Arctic Freeze" : "Ice Bolt";
+          break;
+        case 'mystic':
+          spellName = length >= 5 ? "Mystic Surge" : "Arcane Bolt";
+          break;
       }
 
-      toast.success(`Cast ${spellName}!`, {
-        description: `${chainedCards.length} card chain created!`
+      // Show damage badge instead of toast
+      const power = calculateSpellPower(chainedCards);
+      setDamageDisplay({
+        value: power,
+        type: elementType,
+        isHealing: elementType === 'nature'
       });
       
+      if (damageTimeout.current) {
+        clearTimeout(damageTimeout.current);
+      }
+      
+      damageTimeout.current = setTimeout(() => {
+        setDamageDisplay(null);
+      }, 1500);
+      
+      // Only replace the used cards, not the entire grid
       setTimeout(() => {
+        const newGrid = [...grid];
+        
+        // Only replace the cards that were part of the chain
+        chainedCards.forEach(usedCard => {
+          const newCard = generateSingleCard(usedCard.row, usedCard.col);
+          newGrid[usedCard.row][usedCard.col] = newCard;
+        });
+        
         setChainedCards([]);
-        const newGrid = generateGrid();
         setGrid(newGrid);
         
         if (!checkForPossibleChains(newGrid)) {
@@ -297,44 +324,52 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     if (chainedCards.length >= 2) {
       onChainComplete([...chainedCards]);
       
-      const elementCounts = chainedCards.reduce((counts, card) => {
-        counts[card.type] = (counts[card.type] || 0) + 1;
-        return counts;
-      }, {} as Record<ElementType, number>);
-      
-      const mainElementType = Object.entries(elementCounts)
-        .sort((a, b) => b[1] - a[1])[0][0] as ElementType;
-      
-      const allSameElement = Object.keys(elementCounts).length === 1;
+      const elementType = chainedCards[0].type;
       const length = chainedCards.length;
       
       let spellName = "";
-      if (allSameElement) {
-        switch (mainElementType) {
-          case 'fire':
-            spellName = length >= 5 ? "Fire Storm" : "Fireball";
-            break;
-          case 'nature':
-            spellName = length >= 5 ? "Nature's Blessing" : "Heal";
-            break;
-          case 'ice':
-            spellName = length >= 5 ? "Arctic Freeze" : "Ice Bolt";
-            break;
-          case 'mystic':
-            spellName = length >= 5 ? "Mystic Surge" : "Arcane Bolt";
-            break;
-        }
-      } else {
-        spellName = "Mixed Chain";
+      switch (elementType) {
+        case 'fire':
+          spellName = length >= 5 ? "Fire Storm" : "Fireball";
+          break;
+        case 'nature':
+          spellName = length >= 5 ? "Nature's Blessing" : "Heal";
+          break;
+        case 'ice':
+          spellName = length >= 5 ? "Arctic Freeze" : "Ice Bolt";
+          break;
+        case 'mystic':
+          spellName = length >= 5 ? "Mystic Surge" : "Arcane Bolt";
+          break;
       }
 
-      toast.success(`Cast ${spellName}!`, {
-        description: `${chainedCards.length} card chain created!`
+      // Show damage badge instead of toast
+      const power = calculateSpellPower(chainedCards);
+      setDamageDisplay({
+        value: power,
+        type: elementType,
+        isHealing: elementType === 'nature'
       });
       
+      if (damageTimeout.current) {
+        clearTimeout(damageTimeout.current);
+      }
+      
+      damageTimeout.current = setTimeout(() => {
+        setDamageDisplay(null);
+      }, 1500);
+      
+      // Only replace the used cards, not the entire grid
       setTimeout(() => {
+        const newGrid = [...grid];
+        
+        // Only replace the cards that were part of the chain
+        chainedCards.forEach(usedCard => {
+          const newCard = generateSingleCard(usedCard.row, usedCard.col);
+          newGrid[usedCard.row][usedCard.col] = newCard;
+        });
+        
         setChainedCards([]);
-        const newGrid = generateGrid();
         setGrid(newGrid);
         
         if (!checkForPossibleChains(newGrid)) {
@@ -355,6 +390,14 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     }
   };
 
+  const calculateSpellPower = (cards: Card[]) => {
+    const baseValue = 5;
+    const length = cards.length;
+    
+    const scaleFactor = Math.pow(1.5, length - 2);
+    return Math.floor(baseValue * scaleFactor);
+  };
+
   const getCardPosition = (cardId: string) => {
     const element = document.getElementById(`card-${cardId}`);
     if (!element) return null;
@@ -365,8 +408,30 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     };
   };
 
+  const getDamageColor = (type: ElementType) => {
+    switch (type) {
+      case 'fire': return 'bg-game-fire text-white';
+      case 'nature': return 'bg-game-nature text-white';
+      case 'ice': return 'bg-game-ice text-white';
+      case 'mystic': return 'bg-game-mystic text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
   return (
     <div className="relative flex gap-4">
+      {damageDisplay && (
+        <div className="absolute top-[-60px] right-[-20px] z-30 animate-bounce">
+          <Badge className={cn(
+            'text-lg font-bold px-3 py-2 shadow-lg', 
+            getDamageColor(damageDisplay.type)
+          )}>
+            {damageDisplay.isHealing ? '+' : ''}{damageDisplay.value}
+            {damageDisplay.isHealing ? ' HP' : ' DMG'}
+          </Badge>
+        </div>
+      )}
+      
       <div 
         ref={gridRef}
         className={cn(

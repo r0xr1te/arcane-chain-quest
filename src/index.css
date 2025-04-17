@@ -145,6 +145,10 @@
   .character {
     @apply w-24 h-24 relative flex items-center justify-center;
   }
+
+  .damage-badge {
+    @apply rounded-full px-2 py-1 text-white font-bold text-sm shadow-lg animate-bounce;
+  }
 }
 
 @layer utilities {
@@ -195,5 +199,18 @@
 
   .animate-fade-out {
     animation: fade-out 0.3s ease-out forwards;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-bounce {
+    animation: bounce 0.8s ease-in-out infinite;
   }
 }
