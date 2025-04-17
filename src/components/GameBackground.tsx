@@ -22,7 +22,11 @@ const GameBackground = () => {
         />
         <mesh ref={meshRef} position={[0, 0, -5]}>
           <planeGeometry args={[15, 15]} />
-          <meshStandardMaterial color="#4ade80" opacity={0.2} transparent />
+          <meshStandardMaterial 
+            color={new THREE.Color("#4ade80")} 
+            opacity={0.2} 
+            transparent 
+          />
         </mesh>
       </Canvas>
     </div>
