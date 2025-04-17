@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import CardGrid from "@/components/CardGrid";
 import Character from "@/components/Character";
@@ -55,22 +56,57 @@ const Index = () => {
     }
   };
 
-  const initGame = (playerName: string) => {
-    const createInitialGrid = () => {
-      const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic'];
-      return Array(4).fill(null).map((_, i) => 
-        Array(4).fill(null).map((_, j) => ({
-          id: `${i}-${j}`,
-          type: elements[Math.floor(Math.random() * elements.length)],
-          row: i,
-          col: j,
-          selected: false
-        }))
-      );
-    };
+  const createInitialGrid = (size: 4 | 5 = 5) => {
+    const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic'];
+    return Array(size).fill(null).map((_, i) => 
+      Array(size).fill(null).map((_, j) => ({
+        id: `${i}-${j}`,
+        type: elements[Math.floor(Math.random() * elements.length)],
+        row: i,
+        col: j,
+        selected: false
+      }))
+    );
+  };
 
+  const checkForPossibleChains = (grid: Card[][]) => {
+    const cards = grid.flat();
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const adjacentCards = cards.filter(c => 
+        c.id !== card.id && 
+        isAdjacent(card, c) &&
+        c.type === card.type
+      );
+      if (adjacentCards.length > 0) {
+        return true; // Found at least one possible chain
+      }
+    }
+    return false; // No possible chains found
+  };
+
+  const isAdjacent = (card1: Card, card2: Card) => {
+    const rowDiff = Math.abs(card1.row - card2.row);
+    const colDiff = Math.abs(card1.col - card2.col);
+    return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0);
+  };
+
+  const initGame = (playerName: string) => {
+    let playerGrid = createInitialGrid();
+    let enemyGrid = createInitialGrid();
+    
+    // Ensure there's at least one possible chain in each grid
+    while (!checkForPossibleChains(playerGrid)) {
+      playerGrid = createInitialGrid();
+    }
+    
+    while (!checkForPossibleChains(enemyGrid)) {
+      enemyGrid = createInitialGrid();
+    }
+    
     const initialState: GameState = {
-      grid: createInitialGrid(),
+      grid: playerGrid,
+      enemyGrid: enemyGrid,
       player: {
         name: playerName,
         maxHealth: 100,
@@ -237,6 +273,23 @@ const Index = () => {
     }, 1000);
   };
 
+  const simpleReplaceCards = (grid: Card[][], usedCards: Card[]) => {
+    const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic'];
+    const newGrid = [...grid];
+    
+    usedCards.forEach(card => {
+      newGrid[card.row][card.col] = {
+        id: card.id,
+        type: elements[Math.floor(Math.random() * elements.length)],
+        row: card.row,
+        col: card.col,
+        selected: false
+      };
+    });
+    
+    return newGrid;
+  };
+
   const handleEnemyTurn = () => {
     if (!gameState) return;
     
@@ -254,15 +307,104 @@ const Index = () => {
       return;
     }
     
-    const spellTypes: ElementType[] = ["fire", "fire", "ice", "mystic"];
-    const spellType = spellTypes[Math.floor(Math.random() * spellTypes.length)];
+    // Find possible chains in the enemy grid
+    const enemyGrid = gameState.enemyGrid;
+    let possibleChains: Card[][] = [];
     
-    const chainLength = Math.floor(Math.random() * 3) + 3;
-    const power = calculateSpellPower(Array(chainLength).fill({ type: spellType } as Card));
+    // Find all cards of each type
+    const typeGroups: Record<ElementType, Card[]> = {
+      'fire': [],
+      'ice': [],
+      'mystic': [],
+      'nature': []
+    };
+    
+    // Group cards by type
+    enemyGrid.flat().forEach(card => {
+      typeGroups[card.type].push(card);
+    });
+    
+    // For each type, find possible chains
+    Object.keys(typeGroups).forEach(type => {
+      const cards = typeGroups[type as ElementType];
+      if (cards.length >= 3) { // Need at least 3 cards for a meaningful chain
+        // Try to find adjacent cards
+        for (let i = 0; i < cards.length; i++) {
+          let chain: Card[] = [cards[i]];
+          let processed = new Set<string>([cards[i].id]);
+          
+          // Try to grow the chain with adjacent cards
+          let foundAdjacent = true;
+          while (foundAdjacent && chain.length < 5) { // Cap at 5 cards max
+            foundAdjacent = false;
+            const lastCard = chain[chain.length - 1];
+            
+            // Find adjacent cards of the same type that are not in the chain yet
+            const adjacent = cards.filter(c => 
+              !processed.has(c.id) && 
+              isAdjacent(lastCard, c)
+            );
+            
+            if (adjacent.length > 0) {
+              // Take the first adjacent card
+              chain.push(adjacent[0]);
+              processed.add(adjacent[0].id);
+              foundAdjacent = true;
+            }
+          }
+          
+          if (chain.length >= 3) {
+            possibleChains.push([...chain]);
+          }
+        }
+      }
+    });
+    
+    // If no possible chains found, regenerate the enemy grid
+    if (possibleChains.length === 0) {
+      const newEnemyGrid = createInitialGrid();
+      setGameState(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          enemyGrid: newEnemyGrid
+        };
+      });
+      toast.info("Enemy has no possible moves! Their grid is refreshed.");
+      
+      // Now find chains in the new grid
+      setTimeout(() => handleEnemyTurn(), 1000);
+      return;
+    }
+    
+    // Choose a chain (prefer longer chains and more powerful types)
+    const sortedChains = [...possibleChains].sort((a, b) => {
+      // First sort by length
+      if (a.length !== b.length) {
+        return b.length - a.length;
+      }
+      
+      // Then sort by type preference (fire and mystic are offensive)
+      const typeScore = (type: ElementType): number => {
+        if (type === 'fire') return 4;
+        if (type === 'mystic') return 3;
+        if (type === 'ice') return 2;
+        return 1; // nature
+      };
+      
+      return typeScore(b[0].type) - typeScore(a[0].type);
+    });
+    
+    const selectedChain = sortedChains[0];
+    const chainType = selectedChain[0].type;
+    const chainLength = selectedChain.length;
+    
+    // Calculate power and create spell
+    const power = calculateSpellPower(selectedChain);
     
     const spell: Spell = {
-      name: `Enemy ${spellType.charAt(0).toUpperCase() + spellType.slice(1)} Attack`,
-      element: spellType,
+      name: `Enemy ${chainType.charAt(0).toUpperCase() + chainType.slice(1)} Attack`,
+      element: chainType,
       power,
       description: `Deals ${power} damage`,
       chainLength
@@ -279,13 +421,29 @@ const Index = () => {
     setSpellEffect({
       type: spell.element,
       power: spell.power,
-      isHealing: false,
-      position: "player"
+      isHealing: spell.element === 'nature',
+      position: spell.element === 'nature' ? 'enemy' : 'player'
     });
     
     setTimeout(() => {
-      const newPlayerHealth = Math.max(0, gameState.player.currentHealth - spell.power);
+      let newPlayerHealth = gameState.player.currentHealth;
+      let newEnemyHealth = gameState.enemy.currentHealth;
+      
+      if (spell.element === 'nature') {
+        // Enemy heals
+        newEnemyHealth = Math.min(
+          gameState.enemy.maxHealth, 
+          gameState.enemy.currentHealth + Math.floor(power * 0.8)
+        );
+      } else {
+        // Enemy deals damage
+        newPlayerHealth = Math.max(0, gameState.player.currentHealth - power);
+      }
+      
       const newGameStatus = newPlayerHealth <= 0 ? "enemyWon" : "playing";
+      
+      // Replace used cards in the enemy grid
+      const newEnemyGrid = simpleReplaceCards(gameState.enemyGrid, selectedChain);
       
       setGameState(prev => {
         if (!prev) return null;
@@ -295,6 +453,11 @@ const Index = () => {
             ...prev.player,
             currentHealth: newPlayerHealth
           },
+          enemy: {
+            ...prev.enemy,
+            currentHealth: newEnemyHealth
+          },
+          enemyGrid: newEnemyGrid,
           gameStatus: newGameStatus
         };
       });
@@ -303,13 +466,26 @@ const Index = () => {
         toast.error("Defeat! You were defeated by the enemy!");
       }
       
+      // Check if the new enemy grid has possible chains
       setTimeout(() => {
         setGameState(prev => {
           if (!prev || prev.gameStatus !== "playing") return prev;
+          
+          // Check if the enemy grid has possible chains
+          const hasChains = checkForPossibleChains(prev.enemyGrid);
+          let enemyGrid = prev.enemyGrid;
+          
+          // If no chains possible, regenerate the enemy grid
+          if (!hasChains) {
+            enemyGrid = createInitialGrid();
+            toast.info("Enemy has no possible moves! Their grid is refreshed.");
+          }
+          
           return {
             ...prev,
             isPlayerTurn: true,
-            turnCount: prev.turnCount + 1
+            turnCount: prev.turnCount + 1,
+            enemyGrid
           };
         });
       }, 500);
@@ -345,24 +521,13 @@ const Index = () => {
           isFrozen={gameState.enemyFrozen}
         />
         
-        <div className="opponent-grid">
-          {gameState.grid.flat().slice(0, 16).map((card, index) => (
-            <div
-              key={`opponent-${index}`}
-              className="opponent-card"
-            >
-              <div className={cn(
-                "opponent-element",
-                card.type === 'fire' && "bg-game-fire/20",
-                card.type === 'nature' && "bg-game-nature/20",
-                card.type === 'ice' && "bg-game-ice/20",
-                card.type === 'mystic' && "bg-game-mystic/20"
-              )}>
-                {getElementIcon(card.type, 16)}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Opponent Grid - Always shown */}
+        <CardGrid
+          onChainComplete={() => {}}
+          disabled={true}
+          isOpponentGrid={true}
+          size={5}
+        />
         
         <Character 
           character={gameState.player}
@@ -375,6 +540,7 @@ const Index = () => {
             <CardGrid 
               onChainComplete={handlePlayerChain}
               disabled={!gameState.isPlayerTurn || gameState.gameStatus !== "playing"}
+              size={5}
             />
           </div>
         </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
 import { Card, ElementType } from "@/types/game";
@@ -8,9 +9,16 @@ import { Badge } from "./ui/badge";
 interface CardGridProps {
   onChainComplete: (cards: Card[]) => void;
   disabled: boolean;
+  size?: 4 | 5;
+  isOpponentGrid?: boolean;
 }
 
-const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
+const CardGrid: React.FC<CardGridProps> = ({ 
+  onChainComplete, 
+  disabled, 
+  size = 5,
+  isOpponentGrid = false
+}) => {
   const [grid, setGrid] = useState<Card[][]>([]);
   const [chainedCards, setChainedCards] = useState<Card[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -69,8 +77,8 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     let newGrid: Card[][];
     
     do {
-      newGrid = Array(4).fill(null).map((_, i) => 
-        Array(4).fill(null).map((_, j) => ({
+      newGrid = Array(size).fill(null).map((_, i) => 
+        Array(size).fill(null).map((_, j) => ({
           id: `${i}-${j}`,
           type: elements[Math.floor(Math.random() * elements.length)],
           row: i,
@@ -86,23 +94,18 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   useEffect(() => {
     const initialGrid = generateGrid();
     setGrid(initialGrid);
-    
-    if (!checkForPossibleChains(initialGrid)) {
-      toast.info("No possible chains! Refreshing board...");
-      setGrid(generateGrid());
-    }
-  }, []);
+  }, [size]);
 
   const getCardIcon = (type: ElementType) => {
     switch (type) {
       case 'fire':
-        return <Flame className="text-game-fire" size={36} />;
+        return <Flame className="text-game-fire" size={isOpponentGrid ? 16 : 36} />;
       case 'nature':
-        return <Leaf className="text-game-nature" size={36} />;
+        return <Leaf className="text-game-nature" size={isOpponentGrid ? 16 : 36} />;
       case 'ice':
-        return <Snowflake className="text-game-ice" size={36} />;
+        return <Snowflake className="text-game-ice" size={isOpponentGrid ? 16 : 36} />;
       case 'mystic':
-        return <Sparkles className="text-game-mystic" size={36} />;
+        return <Sparkles className="text-game-mystic" size={isOpponentGrid ? 16 : 36} />;
       default:
         return null;
     }
@@ -119,7 +122,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
 
   const handleCardInteraction = (card: Card) => {
-    if (disabled) return;
+    if (disabled || isOpponentGrid) return;
     
     if (chainedCards.length === 0) {
       setChainedCards([card]);
@@ -160,7 +163,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
   
   const handlePointerDown = (e: React.PointerEvent, card: Card) => {
-    if (disabled) return;
+    if (disabled || isOpponentGrid) return;
     
     e.preventDefault();
     
@@ -175,7 +178,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
   
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || disabled) return;
+    if (!isDragging || disabled || isOpponentGrid) return;
     
     e.preventDefault();
     
@@ -202,7 +205,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
   
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDragging || disabled) return;
+    if (!isDragging || disabled || isOpponentGrid) return;
     
     e.preventDefault();
     
@@ -278,7 +281,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
 
   const handleTouchStart = (e: React.TouchEvent, card: Card) => {
-    if (disabled) return;
+    if (disabled || isOpponentGrid) return;
     e.preventDefault();
     
     setIsDragging(true);
@@ -292,7 +295,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
   
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || disabled) return;
+    if (!isDragging || disabled || isOpponentGrid) return;
     e.preventDefault();
     
     const touch = e.touches[0];
@@ -316,7 +319,7 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
   };
   
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging || disabled) return;
+    if (!isDragging || disabled || isOpponentGrid) return;
     e.preventDefault();
     setIsDragging(false);
     
@@ -417,12 +420,44 @@ const CardGrid: React.FC<CardGridProps> = ({ onChainComplete, disabled }) => {
     }
   };
 
+  const refreshGrid = () => {
+    setGrid(generateGrid());
+  };
+
+  // Public method to update grid externally
+  if (isOpponentGrid) {
+    return (
+      <div className={cn(
+        isOpponentGrid ? "opponent-grid grid-cols-5" : "game-grid grid-cols-5 fixed-game-grid touch-none",
+        disabled && !isOpponentGrid ? "opacity-70 pointer-events-none" : "",
+        isOpponentGrid ? "right-3 top-3 w-[180px]" : "",
+      )}>
+        {grid.flat().map((card, index) => (
+          <div
+            key={`opponent-${index}`}
+            className="opponent-card"
+          >
+            <div className={cn(
+              "opponent-element",
+              card.type === 'fire' && "bg-game-fire/20",
+              card.type === 'nature' && "bg-game-nature/20",
+              card.type === 'ice' && "bg-game-ice/20",
+              card.type === 'mystic' && "bg-game-mystic/20"
+            )}>
+              {getCardIcon(card.type)}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-col items-center gap-4 w-full">
       <div 
         ref={gridRef}
         className={cn(
-          "game-grid fixed-game-grid touch-none",
+          "game-grid grid-cols-5 fixed-game-grid touch-none",
           disabled ? "opacity-70 pointer-events-none" : "cursor-pointer"
         )}
         onPointerMove={handlePointerMove}

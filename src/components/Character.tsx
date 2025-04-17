@@ -23,7 +23,7 @@ const Character: React.FC<CharacterProps> = ({
   return (
     <div className={cn(
       "health-bar-container absolute z-30",
-      isEnemy ? "top-3 right-3" : "bottom-3 left-3"
+      isEnemy ? "top-3 right-[190px]" : "bottom-3 left-3"
     )}>
       <div className="character-info mb-1 flex items-center gap-1">
         <span className="character-level">

@@ -21,6 +21,7 @@ export interface Character {
 
 export interface GameState {
   grid: Card[][];
+  enemyGrid: Card[][];
   player: Character;
   enemy: Character;
   chainedCards: Card[];

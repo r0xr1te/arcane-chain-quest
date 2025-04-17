@@ -10,7 +10,7 @@ interface TurnIndicatorProps {
 const TurnIndicator: React.FC<TurnIndicatorProps> = ({ isPlayerTurn, turnCount }) => {
   return (
     <div className="absolute top-3 left-3 z-30">
-      <div className="bg-game-ui/80 backdrop-blur-sm rounded-lg px-2.5 py-1 flex items-center gap-1.5 shadow-lg border border-white/10">
+      <div className="bg-game-ui/80 backdrop-blur-sm rounded-lg px-2 py-0.5 flex items-center gap-1 shadow-lg border border-white/10">
         <div className={cn(
           "w-1.5 h-1.5 rounded-full shadow-lg relative",
           isPlayerTurn ? "bg-health-player" : "bg-health-enemy",

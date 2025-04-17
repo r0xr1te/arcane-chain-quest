@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -92,12 +93,12 @@
   }
   
   .game-grid {
-    @apply grid grid-cols-4 gap-1.5 w-full max-w-[340px] mx-auto bg-game-ui/30 rounded-lg p-2;
+    @apply grid gap-1.5 w-full max-w-[380px] mx-auto bg-game-ui/30 rounded-lg p-2;
     margin-top: 60px;
   }
   
   .opponent-grid {
-    @apply grid grid-cols-4 gap-0.5 w-[140px] bg-game-ui/30 rounded-lg p-1 absolute top-12 right-3 z-20;
+    @apply grid gap-0.5 bg-game-ui/30 rounded-lg p-1 absolute z-20;
   }
   
   .opponent-card {
