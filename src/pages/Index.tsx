@@ -75,7 +75,7 @@ const Index = () => {
         </div>
       </div>
       
-      {!showStartScreen && <StartScreen onStart={(name) => initGame(name)} />}
+      {!showStartScreen && <StartScreen onStart={(name) => console.log(`Game started with name: ${name}`)} />}
     </>
   );
 };

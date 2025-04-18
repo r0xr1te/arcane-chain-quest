@@ -2,6 +2,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { useGameState } from '@/context/GameStateContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { toast } from 'sonner';

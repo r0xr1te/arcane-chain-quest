@@ -1,5 +1,4 @@
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CardGrid from "@/components/CardGrid";
 import Character from "@/components/Character";
@@ -13,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ElementType } from "@/types/game";
 
 const GameRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
