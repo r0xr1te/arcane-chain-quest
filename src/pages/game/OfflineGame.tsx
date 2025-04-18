@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CardGrid from "@/components/CardGrid";
@@ -7,6 +6,8 @@ import SpellEffect from "@/components/SpellEffect";
 import GameBackground from "@/components/GameBackground";
 import { ElementType, GameState } from "@/types/game";
 import { Button } from "@/components/ui/button";
+import TurnIndicator from "@/components/TurnIndicator";
+import { toast } from "sonner";
 
 const OfflineGame = () => {
   const location = useLocation();
@@ -161,6 +162,178 @@ const OfflineGame = () => {
     }
   };
 
+  const executeEnemyTurn = () => {
+    if (gameState.gameStatus !== "playing") return;
+    if (gameState.enemyFrozen) {
+      // Reset frozen status and end enemy turn
+      setGameState(prevState => ({
+        ...prevState,
+        enemyFrozen: false,
+        isPlayerTurn: true,
+        turnCount: prevState.turnCount + 1
+      }));
+      toast.info("Enemy is frozen and skips their turn!");
+      return;
+    }
+
+    // Find the best chain in the enemy grid
+    const bestChain = findBestEnemyChain(gameState.enemyGrid);
+    
+    if (bestChain.length >= 2) {
+      // Execute the enemy spell
+      const spell = determineSpellEffect(bestChain);
+      
+      setGameState(prevState => ({
+        ...prevState,
+        lastSpell: spell
+      }));
+      
+      // Show spell effect for enemy
+      setSpellEffect({
+        type: spell.element,
+        power: spell.power,
+        isHealing: spell.element === "nature",
+        position: spell.element === "nature" ? "enemy" : "player"
+      });
+      
+      setTimeout(() => {
+        if (spell.element === "nature") {
+          const newHealth = Math.min(
+            gameState.enemy.maxHealth,
+            gameState.enemy.currentHealth + spell.power
+          );
+          
+          setGameState(prevState => ({
+            ...prevState,
+            enemy: {
+              ...prevState.enemy,
+              currentHealth: newHealth
+            }
+          }));
+          
+          toast.info(`Enemy casts ${spell.name} and heals for ${spell.power} health!`);
+        } else {
+          const newPlayerHealth = Math.max(0, gameState.player.currentHealth - spell.power);
+          
+          setGameState(prevState => ({
+            ...prevState,
+            player: {
+              ...prevState.player,
+              currentHealth: newPlayerHealth
+            },
+            gameStatus: newPlayerHealth <= 0 ? "enemyWon" : "playing"
+          }));
+          
+          toast.error(`Enemy casts ${spell.name} and deals ${spell.power} damage!`);
+          
+          if (newPlayerHealth <= 0) {
+            toast.error("You have been defeated!");
+          }
+        }
+        
+        setSpellEffect(null);
+        
+        // End enemy turn
+        setTimeout(() => {
+          setGameState(prevState => ({
+            ...prevState,
+            isPlayerTurn: true,
+            turnCount: prevState.turnCount + 1
+          }));
+        }, 500);
+      }, 1000);
+    } else {
+      // No valid chain found, just end turn
+      toast.info("Enemy couldn't find a spell to cast!");
+      setGameState(prevState => ({
+        ...prevState,
+        isPlayerTurn: true,
+        turnCount: prevState.turnCount + 1
+      }));
+    }
+  };
+
+  const findBestEnemyChain = (grid: any) => {
+    const cards = grid.flat();
+    let bestChain: any[] = [];
+    
+    // Try to find a nature chain if enemy health is low
+    if (gameState.enemy.currentHealth < 50) {
+      const natureChain = findChainByType(cards, "nature");
+      if (natureChain.length >= 2) {
+        return natureChain;
+      }
+    }
+    
+    // Otherwise find the longest chain
+    for (let i = 0; i < cards.length; i++) {
+      const startCard = cards[i];
+      const chain = findLongestChain(cards, startCard, []);
+      if (chain.length > bestChain.length) {
+        bestChain = chain;
+      }
+    }
+    
+    return bestChain;
+  };
+
+  const findChainByType = (cards: any[], targetType: ElementType) => {
+    for (let i = 0; i < cards.length; i++) {
+      const startCard = cards[i];
+      if (startCard.type === targetType || startCard.type === 'skill') {
+        const chain = findLongestChain(cards, startCard, [], targetType);
+        if (chain.length >= 2) {
+          return chain;
+        }
+      }
+    }
+    return [];
+  };
+
+  const findLongestChain = (
+    cards: any[], 
+    currentCard: any, 
+    currentChain: any[] = [], 
+    preferredType: ElementType | null = null
+  ) => {
+    const newChain = [...currentChain, currentCard];
+    
+    // Get all possible next cards that are adjacent and of the same type (or skill)
+    const validAdjacentCards = cards.filter((card: any) => {
+      if (newChain.some((c: any) => c.id === card.id)) return false;
+      
+      if (!isAdjacent(currentCard, card)) return false;
+      
+      // Check if types match or either is a skill card
+      const typeMatches = 
+        card.type === currentCard.type || 
+        card.type === 'skill' || 
+        currentCard.type === 'skill';
+      
+      // If we have a preferred type, make sure we're following that type
+      if (preferredType) {
+        return typeMatches && (card.type === preferredType || card.type === 'skill');
+      }
+      
+      return typeMatches;
+    });
+    
+    if (validAdjacentCards.length === 0) {
+      return newChain;
+    }
+    
+    let longestChain = newChain;
+    
+    for (const nextCard of validAdjacentCards) {
+      const nextChain = findLongestChain(cards, nextCard, newChain, preferredType);
+      if (nextChain.length > longestChain.length) {
+        longestChain = nextChain;
+      }
+    }
+    
+    return longestChain;
+  };
+
   const handlePlayerChain = (cards: any) => {
     if (!gameState) return;
     
@@ -171,7 +344,17 @@ const OfflineGame = () => {
       lastSpell: spell
     }));
     
+    // Show spell effect for player
+    setSpellEffect({
+      type: spell.element,
+      power: spell.power,
+      isHealing: spell.element === "nature",
+      position: spell.element === "nature" ? "player" : "enemy"
+    });
+    
     setTimeout(() => {
+      setSpellEffect(null);
+      
       if (spell.element === "nature") {
         const newHealth = Math.min(
           100,
@@ -185,6 +368,8 @@ const OfflineGame = () => {
             currentHealth: newHealth
           }
         }));
+        
+        toast.success(`You cast ${spell.name} and heal for ${spell.power} health!`);
       } else {
         const newEnemyHealth = Math.max(0, gameState.enemy.currentHealth - spell.power);
         
@@ -194,7 +379,7 @@ const OfflineGame = () => {
           const freezeChance = spell.chainLength * 10;
           if (Math.random() * 100 < freezeChance) {
             enemyFrozen = true;
-            alert("Enemy frozen! They'll skip their next turn.");
+            toast.success("Enemy frozen! They'll skip their next turn.");
           }
         }
         
@@ -211,20 +396,34 @@ const OfflineGame = () => {
         }));
         
         if (newGameStatus === "playerWon") {
-          alert("Victory! You defeated the enemy!");
+          toast.success("Victory! You defeated the enemy!");
         }
       }
       
-      // End the turn
+      // End player turn and start enemy turn after a delay
       setTimeout(() => {
         setGameState(prevState => ({
           ...prevState,
-          isPlayerTurn: !prevState.isPlayerTurn,
-          turnCount: prevState.turnCount + 1
+          isPlayerTurn: false
         }));
+        
+        // Trigger enemy turn after a short delay
+        setTimeout(() => {
+          executeEnemyTurn();
+        }, 1000);
       }, 500);
     }, 1000);
   };
+
+  useEffect(() => {
+    if (gameState.gameStatus === "playerWon") {
+      // Handle player victory
+      toast.success("You won the battle!");
+    } else if (gameState.gameStatus === "enemyWon") {
+      // Handle player defeat
+      toast.error("You were defeated!");
+    }
+  }, [gameState.gameStatus]);
 
   return (
     <>
@@ -238,10 +437,16 @@ const OfflineGame = () => {
           Leave Game
         </Button>
         
+        <TurnIndicator 
+          isPlayerTurn={gameState.isPlayerTurn} 
+          turnCount={gameState.turnCount} 
+        />
+        
         <Character 
           character={gameState.enemy} 
           isEnemy={true} 
-          isTakingDamage={spellEffect !== null && spellEffect.position === "enemy"}
+          isTakingDamage={spellEffect !== null && spellEffect.position === "enemy" && !spellEffect.isHealing}
+          isHealing={spellEffect !== null && spellEffect.position === "enemy" && spellEffect.isHealing}
           isFrozen={gameState.enemyFrozen}
         />
         
@@ -255,8 +460,8 @@ const OfflineGame = () => {
         
         <Character 
           character={gameState.player}
-          isTakingDamage={spellEffect !== null && spellEffect.position === "player"}
-          isHealing={spellEffect !== null && spellEffect.isHealing}
+          isTakingDamage={spellEffect !== null && spellEffect.position === "player" && !spellEffect.isHealing}
+          isHealing={spellEffect !== null && spellEffect.position === "player" && spellEffect.isHealing}
         />
         
         {spellEffect && (
