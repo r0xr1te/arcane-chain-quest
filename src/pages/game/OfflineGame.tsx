@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CardGrid from "@/components/CardGrid";
@@ -121,11 +122,11 @@ const OfflineGame = () => {
     // Boost power if skill card is included
     const actualPower = hasSkill ? Math.floor(power * 1.3) : power;
     
-    switch (elementType) {
+    switch (elementType as ElementType) {
       case "fire":
         return {
           name: length >= 5 ? "Fire Storm" : "Fireball",
-          element: "fire",
+          element: "fire" as ElementType,
           power: actualPower,
           description: `Deal ${actualPower} damage to the enemy`,
           chainLength: length
@@ -134,7 +135,7 @@ const OfflineGame = () => {
       case "nature":
         return {
           name: length >= 5 ? "Nature's Blessing" : "Healing Touch",
-          element: "nature",
+          element: "nature" as ElementType,
           power: Math.floor(actualPower * 0.8),
           description: `Restore ${Math.floor(actualPower * 0.8)} health`,
           chainLength: length
@@ -143,7 +144,7 @@ const OfflineGame = () => {
       case "ice":
         return {
           name: length >= 5 ? "Arctic Freeze" : "Ice Bolt",
-          element: "ice",
+          element: "ice" as ElementType,
           power: Math.floor(actualPower * 0.9),
           description: `Deal ${Math.floor(actualPower * 0.9)} damage and ${length * 10}% chance to freeze`,
           chainLength: length
@@ -152,7 +153,7 @@ const OfflineGame = () => {
       default: // mystic
         return {
           name: length >= 5 ? "Mystic Explosion" : "Arcane Bolt",
-          element: "mystic",
+          element: "mystic" as ElementType,
           power: Math.floor(actualPower * 1.2),
           description: `Deal ${Math.floor(actualPower * 1.2)} arcane damage`,
           chainLength: length

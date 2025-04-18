@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, LogIn, UserPlus } from "lucide-react";
 
 const Index = () => {
-  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [showStartScreen, setShowStartScreen] = useState(false);
   const { user, loading } = useAuth();
 
   return (
@@ -65,7 +65,7 @@ const Index = () => {
               </div>
               
               <div className="border-t border-game-uiAccent/30 pt-4 mt-6">
-                <Button className="game-button w-full" onClick={() => setShowStartScreen(false)}>
+                <Button className="game-button w-full" onClick={() => setShowStartScreen(true)}>
                   Play Offline
                   <ArrowRight size={16} className="ml-2" />
                 </Button>
@@ -75,7 +75,7 @@ const Index = () => {
         </div>
       </div>
       
-      {!showStartScreen && <StartScreen onStart={(name) => console.log(`Game started with name: ${name}`)} />}
+      {showStartScreen && <StartScreen onStart={(name) => console.log(`Game started with name: ${name}`)} />}
     </>
   );
 };
