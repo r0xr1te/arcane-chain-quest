@@ -45,8 +45,8 @@ export interface Spell {
 export interface User {
   id: string;
   username: string;
-  email: string;
-  createdAt: string;
+  email?: string;
+  createdAt?: string;
 }
 
 export interface Deck {

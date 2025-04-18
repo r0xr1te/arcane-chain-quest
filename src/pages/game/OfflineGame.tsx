@@ -46,6 +46,8 @@ const OfflineGame = () => {
     position: "player" | "enemy";
   } | null>(null);
 
+  const [turnEndTime, setTurnEndTime] = useState<number | undefined>(Date.now() + 10000);
+
   const createInitialGrid = (size: 4 | 5 = 5) => {
     const elements: ElementType[] = ['fire', 'nature', 'ice', 'mystic', 'skill'];
     return Array(size).fill(null).map((_, i) => 
@@ -99,7 +101,8 @@ const OfflineGame = () => {
     setGameState(prevState => ({
       ...prevState,
       grid: playerGrid,
-      enemyGrid: enemyGrid
+      enemyGrid: enemyGrid,
+      turnEndTime: Date.now() + 10000 // Set initial turn end time
     }));
   }, []);
 
@@ -162,15 +165,33 @@ const OfflineGame = () => {
     }
   };
 
+  const handleTurnTimeout = () => {
+    if (gameState.isPlayerTurn && gameState.gameStatus === "playing") {
+      toast.warning("Time's up! Your turn has ended.");
+      setGameState(prevState => ({
+        ...prevState,
+        isPlayerTurn: false,
+        turnCount: prevState.turnCount + 1,
+      }));
+      
+      // Execute enemy turn after a short delay
+      setTimeout(() => {
+        executeEnemyTurn();
+      }, 500);
+    }
+  };
+
   const executeEnemyTurn = () => {
     if (gameState.gameStatus !== "playing") return;
+    
     if (gameState.enemyFrozen) {
       // Reset frozen status and end enemy turn
       setGameState(prevState => ({
         ...prevState,
         enemyFrozen: false,
         isPlayerTurn: true,
-        turnCount: prevState.turnCount + 1
+        turnCount: prevState.turnCount + 1,
+        turnEndTime: Date.now() + 10000 // Reset timer for player's turn
       }));
       toast.info("Enemy is frozen and skips their turn!");
       return;
@@ -238,7 +259,8 @@ const OfflineGame = () => {
           setGameState(prevState => ({
             ...prevState,
             isPlayerTurn: true,
-            turnCount: prevState.turnCount + 1
+            turnCount: prevState.turnCount + 1,
+            turnEndTime: Date.now() + 10000 // Reset timer for player's turn
           }));
         }, 500);
       }, 1000);
@@ -248,7 +270,8 @@ const OfflineGame = () => {
       setGameState(prevState => ({
         ...prevState,
         isPlayerTurn: true,
-        turnCount: prevState.turnCount + 1
+        turnCount: prevState.turnCount + 1,
+        turnEndTime: Date.now() + 10000 // Reset timer for player's turn
       }));
     }
   };
@@ -404,13 +427,14 @@ const OfflineGame = () => {
       setTimeout(() => {
         setGameState(prevState => ({
           ...prevState,
-          isPlayerTurn: false
+          isPlayerTurn: false,
+          turnEndTime: undefined // Clear timer during transition
         }));
         
         // Trigger enemy turn after a short delay
         setTimeout(() => {
           executeEnemyTurn();
-        }, 1000);
+        }, 500);
       }, 500);
     }, 1000);
   };
@@ -440,6 +464,8 @@ const OfflineGame = () => {
         <TurnIndicator 
           isPlayerTurn={gameState.isPlayerTurn} 
           turnCount={gameState.turnCount} 
+          turnEndTime={gameState.turnEndTime}
+          onTimeEnd={handleTurnTimeout}
         />
         
         <Character 

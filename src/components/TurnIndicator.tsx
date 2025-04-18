@@ -16,9 +16,10 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
   turnEndTime,
   onTimeEnd
 }) => {
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState<number>(10);
   
   useEffect(() => {
+    // If no specific end time is provided, default to 10 seconds
     if (!turnEndTime) {
       setTimeLeft(10);
       return;
@@ -26,7 +27,7 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
     
     const updateTimer = () => {
       const now = Date.now();
-      const remaining = Math.max(0, Math.floor((turnEndTime - now) / 1000));
+      const remaining = Math.max(0, Math.ceil((turnEndTime - now) / 1000));
       setTimeLeft(remaining);
       
       if (remaining === 0 && onTimeEnd) {
@@ -38,7 +39,7 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
     updateTimer();
     
     // Then update every second
-    const interval = setInterval(updateTimer, 1000);
+    const interval = setInterval(updateTimer, 500);
     return () => clearInterval(interval);
   }, [turnEndTime, onTimeEnd]);
 

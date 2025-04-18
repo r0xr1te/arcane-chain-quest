@@ -1,7 +1,7 @@
 
 import { Card, ElementType } from "@/types/game";
 import { useEffect, useState } from "react";
-import { Flame, Leaf, Snowflake, Sparkles } from "lucide-react";
+import { Flame, Leaf, Snowflake, Sparkles, Rainbow } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SpellEffectProps {
@@ -79,6 +79,42 @@ const SpellEffect: React.FC<SpellEffectProps> = ({
             <Sparkles size={64} />
           </div>
         );
+      case "skill":
+        return (
+          <div className={cn(className, "rainbow-skill")}>
+            <div 
+              className={cn(
+                "absolute inset-0 animate-pulse-glow opacity-70 blur-md",
+                "rainbow-glow"
+              )}
+            >
+              <Rainbow size={64} />
+            </div>
+            <Rainbow size={64} className="animate-rainbow-pulse" />
+            <style jsx global>{`
+              .rainbow-skill {
+                color: #8B5CF6;
+                animation: rainbow-color 2s infinite;
+              }
+              .rainbow-glow {
+                filter: drop-shadow(0 0 8px currentColor);
+              }
+              @keyframes rainbow-color {
+                0% { color: #8B5CF6; } /* Purple */
+                20% { color: #D946EF; } /* Pink */
+                40% { color: #F97316; } /* Orange */
+                60% { color: #0EA5E9; } /* Blue */
+                80% { color: #33C3F0; } /* Light Blue */
+                100% { color: #8B5CF6; } /* Back to Purple */
+              }
+              @keyframes rainbow-pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+              }
+            `}</style>
+          </div>
+        );
     }
   };
   
@@ -87,7 +123,7 @@ const SpellEffect: React.FC<SpellEffectProps> = ({
       "spell-effect",
       position === "enemy" ? "top-32 md:top-40" : "bottom-32 md:bottom-40",
       "left-1/2 transform -translate-x-1/2",
-      "pointer-events-none",
+      "pointer-events-none absolute",
     )}>
       <div className="relative">
         {getProjectileIcon()}
