@@ -1,11 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -13,8 +14,15 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,14 +37,31 @@ const Register = () => {
       return;
     }
     
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+    
     setLoading(true);
     
     try {
       await signUp(email, password, username);
-      toast.success('Account created successfully!');
-      navigate('/dashboard');
+      toast.success('Account created successfully! Please check your email to verify your account.');
+      // Navigate to login with a message
+      navigate('/login?message=account_created');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create account');
+      console.error("Registration error:", error);
+      
+      // User-friendly error messages
+      let errorMessage = 'Failed to create account';
+      
+      if (error.message.includes('already registered')) {
+        errorMessage = 'This email is already registered. Please try logging in instead.';
+      } else if (error.message.includes('password')) {
+        errorMessage = 'Password is too weak. Please use at least 6 characters.';
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -117,6 +142,12 @@ const Register = () => {
             Already have an account?{' '}
             <Link to="/login" className="text-game-uiAccent hover:underline">
               Sign In
+            </Link>
+          </div>
+          
+          <div className="text-center mt-4">
+            <Link to="/" className="inline-flex items-center text-game-uiAccent hover:underline">
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back to Home
             </Link>
           </div>
         </form>

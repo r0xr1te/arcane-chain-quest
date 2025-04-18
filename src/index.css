@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -247,5 +246,25 @@
 
   .animate-bounce {
     animation: bounce 0.8s ease-in-out infinite;
+  }
+
+  .text-rainbow {
+    color: #8B5CF6;
+    animation: rainbow-color 2s infinite;
+  }
+  
+  @keyframes rainbow-color {
+    0% { color: #8B5CF6; } /* Purple */
+    20% { color: #D946EF; } /* Pink */
+    40% { color: #F97316; } /* Orange */
+    60% { color: #0EA5E9; } /* Blue */
+    80% { color: #33C3F0; } /* Light Blue */
+    100% { color: #8B5CF6; } /* Back to Purple */
+  }
+  
+  @keyframes rainbow-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
   }
 }

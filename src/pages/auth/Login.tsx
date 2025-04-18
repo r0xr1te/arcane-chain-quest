@@ -1,18 +1,36 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if there's a success message in the URL params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const message = params.get('message');
+    if (message === 'verification_success') {
+      toast.success('Email verified successfully! You can now log in.');
+    }
+  }, [location]);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +47,16 @@ const Login = () => {
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
+      // Make the error message more user-friendly
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message.includes('Invalid login')) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and confirm your account before logging in';
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -84,6 +111,12 @@ const Login = () => {
             Don't have an account?{' '}
             <Link to="/register" className="text-game-uiAccent hover:underline">
               Register
+            </Link>
+          </div>
+          
+          <div className="text-center mt-4">
+            <Link to="/" className="inline-flex items-center text-game-uiAccent hover:underline">
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back to Home
             </Link>
           </div>
         </form>

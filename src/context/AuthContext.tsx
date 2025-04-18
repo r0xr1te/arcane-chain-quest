@@ -21,14 +21,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Handle auth state change
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session);
-        setSession(session);
+      async (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession);
+        setSession(currentSession);
         
-        if (session) {
+        if (currentSession) {
           // Use setTimeout to avoid potential deadlocks with auth state changes
           setTimeout(async () => {
             try {
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               const { data, error } = await supabase
                 .from('user_profiles')
                 .select('*')
-                .eq('id', session.user.id)
+                .eq('id', currentSession.user.id)
                 .single();
               
               if (data) {
@@ -44,13 +45,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(data as User);
               } else if (error) {
                 console.error('Error fetching user profile:', error);
+                // Try to create a profile if it doesn't exist
+                if (error.code === 'PGRST116') {
+                  const username = currentSession.user.user_metadata.username || 'User';
+                  const { data: newProfile, error: createError } = await supabase
+                    .from('user_profiles')
+                    .insert([{ 
+                      id: currentSession.user.id,
+                      username
+                    }])
+                    .select()
+                    .single();
+                    
+                  if (newProfile) {
+                    console.log('Created new user profile:', newProfile);
+                    setUser(newProfile as User);
+                  } else {
+                    console.error('Error creating user profile:', createError);
+                  }
+                }
               }
             } catch (err) {
               console.error('Error in auth state change:', err);
+            } finally {
+              setLoading(false);
             }
           }, 0);
         } else {
           setUser(null);
+          setLoading(false);
         }
       }
     );
@@ -58,22 +81,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // THEN check for existing session
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
         
-        console.log('Initial session check:', session);
-        setSession(session);
+        console.log('Initial session check:', existingSession);
         
-        if (session) {
+        if (existingSession) {
+          setSession(existingSession);
+          
           const { data, error } = await supabase
             .from('user_profiles')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', existingSession.user.id)
             .single();
             
           if (data) {
             console.log('User profile found:', data);
             setUser(data as User);
-          } else if (error) {
+          } else {
             console.error('Error fetching user profile:', error);
           }
         }
@@ -102,7 +126,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         options: {
           data: {
             username // Include username in user metadata
-          }
+          },
+          emailRedirectTo: window.location.origin // Ensure redirects work in both production and preview
         }
       });
       
@@ -169,6 +194,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       console.log('Login successful:', data);
+      toast.success('Welcome back!');
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign in');
       throw error;

@@ -91,7 +91,7 @@ const SpellEffect: React.FC<SpellEffectProps> = ({
               <Rainbow size={64} />
             </div>
             <Rainbow size={64} className="animate-rainbow-pulse" />
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
               .rainbow-skill {
                 color: #8B5CF6;
                 animation: rainbow-color 2s infinite;
@@ -112,7 +112,7 @@ const SpellEffect: React.FC<SpellEffectProps> = ({
                 50% { transform: scale(1.1); }
                 100% { transform: scale(1); }
               }
-            `}</style>
+            `}} />
           </div>
         );
     }

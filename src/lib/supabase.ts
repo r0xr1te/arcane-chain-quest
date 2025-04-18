@@ -10,5 +10,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    debug: true, // Enable debugging in development
+    detectSessionInUrl: true, // Important for handling redirect URLs
+    flowType: 'pkce' // Use PKCE flow which is more secure
   }
 });
+
+// Helper function to handle verification URLs
+export const handleAuthRedirect = () => {
+  const url = window.location.href;
+  if (url.includes('#access_token=') || url.includes('type=recovery') || url.includes('type=signup')) {
+    // Let Supabase handle the redirect
+    const { data, error } = supabase.auth.getSession();
+    console.log("Handling auth redirect, session:", data, "error:", error);
+    
+    // Remove hash fragment if present
+    if (window.location.hash) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
+  }
+};
