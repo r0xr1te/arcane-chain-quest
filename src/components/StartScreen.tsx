@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface StartScreenProps {
   onStart: (playerName: string) => void;
@@ -9,6 +9,13 @@ interface StartScreenProps {
 
 const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   const [playerName, setPlayerName] = useState("Wizard");
+  const navigate = useNavigate();
+  
+  const handleStart = () => {
+    navigate('/game/offline', { 
+      state: { playerName }
+    });
+  };
   
   return (
     <div className="fixed inset-0 bg-game-gradient flex items-center justify-center z-50 animate-fade-in">
@@ -48,7 +55,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
               "game-button w-full text-xl py-6",
               "hover:scale-105 transition-transform"
             )}
-            onClick={() => onStart(playerName || "Wizard")}
+            onClick={handleStart}
           >
             Begin Adventure!
           </Button>

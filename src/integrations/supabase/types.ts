@@ -9,7 +9,143 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cards: {
+        Row: {
+          created_at: string
+          description: string
+          effects: Json | null
+          id: string
+          name: string
+          rarity: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          effects?: Json | null
+          id?: string
+          name: string
+          rarity: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          effects?: Json | null
+          id?: string
+          name?: string
+          rarity?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      decks: {
+        Row: {
+          cards: Json
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cards: Json
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cards?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          created_at: string
+          game_state: Json
+          guest_id: string | null
+          host_id: string | null
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          game_state: Json
+          guest_id?: string | null
+          host_id?: string | null
+          id?: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          game_state?: Json
+          guest_id?: string | null
+          host_id?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_cards: {
+        Row: {
+          acquired_at: string
+          card_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          card_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          card_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cards_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
